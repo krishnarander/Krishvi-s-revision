@@ -372,6 +372,11 @@ button.scene{font:inherit;color:inherit;text-align:left;width:100%;border:3px so
 .mbtn.rwlink{margin-top:8px;background:#f3ebff}
 .mascotav{display:grid;place-items:center;overflow:hidden;background:var(--blush)}
 .mascotav .mascot{width:44px;height:52px}
+.nb.circ{border-radius:50%;min-width:1.35em;height:1.35em;padding:0;display:inline-grid;place-items:center}
+.nb.word{font-size:clamp(2.4rem,8vh,4.5rem)}
+.arrow{font-size:clamp(2.4rem,8vh,4rem);color:var(--berry-soft);font-weight:800}
+.ansline{margin:6px 0 4px}
+.ansline .nb{font-size:clamp(3rem,10vh,5.5rem);min-width:2em}
 </style>
 </head>
 <body>
@@ -738,16 +743,16 @@ const SUBJECTS = [
   { id: "e-sight", mode: "written", e: "👀", t: "Write sight words", kind: "trace", chars: DATA.sight, say: w => [w],
     help: "Use the words in her book if the list there is different." },
   { id: "e-sightq", mode: "written", e: "👂", t: "Listen and find the word", kind: "quiz",
-    gen: () => { const w = pick(DATA.sight); const c = choices(w, DATA.sight); return { big: "👂", ask: ["Tap the word", "_", w], opts: c.opts, ans: c.ans, key: w }; } },
+    gen: () => { const w = pick(DATA.sight); const c = choices(w, DATA.sight); return { big: "👂", fill: w, ask: ["Tap the word", "_", w], opts: c.opts, ans: c.ans, key: w }; } },
   { id: "e-c2s", mode: "written", e: "🔡", t: "Small letter for the capital", kind: "quiz",
-    gen: () => { const i = rnd(26); const c = choices(LOW[i], LOW); return { big: UP[i], ask: ["Find the small letter for", LN(UP[i])], after: ["small", LN(UP[i])], opts: c.opts, ans: c.ans, key: UP[i] }; } },
+    gen: () => { const i = rnd(26); const c = choices(LOW[i], LOW); return { big: `<span class="seqrow"><span class="nb">${UP[i]}</span><span class="arrow">→</span><span class="nb blank"></span></span>`, bigCls: "txt", fill: LOW[i], ask: ["Find the small letter for", LN(UP[i])], after: ["small", LN(UP[i])], opts: c.opts, ans: c.ans, key: UP[i] }; } },
   { id: "e-blend", mode: "written", e: "🧩", t: "Blend and write the word", kind: "order",
     help: "Say each sound slowly, c… a… t, then blend them: cat!",
     gen: () => { const [w, em] = pick(DATA.blend); return { big: em, ask: [...w.split("").map(PH), "_", w], items: w.split(""), itemSay: l => [PH(l)], done: [w], key: w }; } },
   { id: "e-order", mode: "written", e: "🔢", t: "Arrange in ABC order", kind: "order",
     gen: () => { const L = Math.random() < .5 ? UP : LOW; const ix = sample(range(0, 25), 4).sort((a, b) => a - b); return { ask: ["Tap the letters in A B C order."], items: ix.map(i => L[i]), itemSay: l => [LN(l)], key: ix.join() }; } },
   { id: "e-first", mode: "written", e: "🖼️", t: "First letter of the picture", kind: "quiz",
-    gen: () => { const a = pick(DATA.abc); const c = choices(a[0], UP); return { big: a[2], ask: ["What is the first letter of", a[1], "?"], after: [`${a[0]} for ${a[1]}`], opts: c.opts, ans: c.ans, key: a[0] }; } },
+    gen: () => { const a = pick(DATA.abc); const c = choices(a[0], UP); return { big: a[2], fill: a[0], ask: ["What is the first letter of", a[1], "?"], after: [`${a[0]} for ${a[1]}`], opts: c.opts, ans: c.ans, key: a[0] }; } },
 ]},
 
 // ===================== MATHS =====================
@@ -789,13 +794,13 @@ const SUBJECTS = [
     help: "10 form: 10, 20, 30, 40, 50, 60, 70, 80, 90, 100.",
     gen: () => { const st = rnd(6) + 1; const seq = [0, 1, 2, 3].map(k => (st + k) * 10); const h = rnd(3) + 1; const c = choices(seq[h], near(seq[h], 10)); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Count in tens. Which number is missing?"], after: seq.map(N), opts: c.opts, ans: c.ans, key: st + "-" + h }; } },
   { id: "m-count", mode: "written", e: "🍓", t: "Count and write", kind: "quiz",
-    gen: () => { const n = rnd(15) + 1, em = pick(DATA.countEmoji); const c = choices(n, range(1, 15)); return { big: `<span class="countbox">${em.repeat(n)}</span>`, ask: ["Count them. How many are there?"], after: [N(n)], opts: c.opts, ans: c.ans, key: n }; } },
+    gen: () => { const n = rnd(15) + 1, em = pick(DATA.countEmoji); const c = choices(n, range(1, 15)); return { big: `<span class="countbox">${em.repeat(n)}</span>`, fill: n, ask: ["Count them. How many are there?"], after: [N(n)], opts: c.opts, ans: c.ans, key: n }; } },
   { id: "m-circle", mode: "written", e: "⭕", t: "Circle the number for the name", kind: "quiz",
-    gen: () => { const n = rnd(15) + 1; const c = choices(n, range(1, 15)); return { big: DATA.numNames[n], bigCls: "txt", ask: ["Tap the number", N(n)], after: [...spell(DATA.numNames[n]), "_", N(n)], opts: c.opts, ans: c.ans, key: n }; } },
+    gen: () => { const n = rnd(15) + 1; const c = choices(n, range(1, 15)); return { big: `<span class="seqrow"><span class="nb word">${DATA.numNames[n]}</span><span class="arrow">→</span><span class="nb blank"></span></span>`, bigCls: "txt", fill: n, ask: ["Tap the number", N(n)], after: [...spell(DATA.numNames[n]), "_", N(n)], opts: c.opts, ans: c.ans, key: n }; } },
   { id: "m-cmp", mode: "written", e: "🐊", t: "Greater, lesser or equal", kind: "quiz",
     help: "> greater than, < lesser than, = equal to. The crocodile mouth always eats the bigger number!",
     gen: () => { const a = rnd(20) + 1, b = Math.random() < .2 ? a : rnd(20) + 1; const ans = a > b ? 0 : a < b ? 1 : 2;
-      return { big: `${a} ◯ ${b}`, ask: ["Is", N(a), "greater than, less than, or equal to", N(b), "?"], after: [N(a), ["is greater than", "is less than", "is equal to"][ans], N(b)], opts: [">", "<", "="], ans, key: `${a}-${b}` }; } },
+      return { big: `<span class="seqrow"><span class="nb">${a}</span><span class="nb blank circ"></span><span class="nb">${b}</span></span>`, bigCls: "txt", fill: [">", "<", "="][ans], ask: ["Is", N(a), "greater than, less than, or equal to", N(b), "?"], after: [N(a), ["is greater than", "is less than", "is equal to"][ans], N(b)], opts: [">", "<", "="], ans, key: `${a}-${b}` }; } },
 ]},
 
 // ===================== KANNADA =====================
@@ -823,7 +828,7 @@ const SUBJECTS = [
       return { big: BOXES(seq, h, "kn"), bigCls: "txt", fill: seq[h], ask: ["Which letter is missing?"], after: [KN(seq[h])], opts: c.opts.map(o => `<span class="kn">${o}</span>${small(knSay(o))}`), ans: c.ans, key: i + "-" + h }; } },
   { id: "k-first", mode: "written", e: "🖼️", t: "First letter of the picture", n: "ಚಿತ್ರ ನೋಡಿ ಮೊದಲ ಅಕ್ಷರ ಬರೆಯಿರಿ", kind: "quiz",
     gen: () => { const p = pick(DATA.knPics); const c = choices(p[0], DATA.knPics.map(x => x[0]));
-      return { big: p[4], sub: `${p[1]} · ${p[2]} · ${p[3]}`, ask: [KN(p[1]), "_", "What is the first letter?"], after: [KN(p[0])], opts: c.opts.map(o => `<span class="kn">${o}</span>${small(knSay(o))}`), ans: c.ans, key: p[0] }; } },
+      return { big: p[4], fill: p[0], fillCls: "kn", sub: `${p[1]} · ${p[2]} · ${p[3]}`, ask: [KN(p[1]), "_", "What is the first letter?"], after: [KN(p[0])], opts: c.opts.map(o => `<span class="kn">${o}</span>${small(knSay(o))}`), ans: c.ans, key: p[0] }; } },
   { id: "k-odd", mode: "written", e: "🧐", t: "Pick the odd letter out", n: "ಗುಂಪಿಗೆ ಸೇರದ ಅಕ್ಷರ ಆರಿಸಿ", kind: "quiz",
     gen: () => { const [a, b] = sample(KN_LET.slice(0, 40), 2); const opts = shuffle([a, a, a, b]); return { big: "🧐", ask: ["Three are the same. Which letter is different?"], after: [KN(b)], opts: opts.map(o => `<span class="kn">${o}</span>`), ans: opts.indexOf(b), key: a + b }; } },
   { id: "k-circle", mode: "written", e: "⭕", t: "Circle the same letters", n: "ಕೆಳಭಾಗದ ಅಕ್ಷರ ನೋಡಿ, ಅದೇ ಅಕ್ಷರಗಳಿಗೆ ವೃತ್ತ ಹಾಕಿ", kind: "find",
@@ -855,7 +860,7 @@ const SUBJECTS = [
   { id: "h-blank", mode: "written", e: "⬜", t: "Write the missing letter", n: "छूटे हुए अक्षरों को लिखिए", kind: "quiz",
     gen: () => { const i = rnd(4); const seq = HI_LET.slice(i, i + 4); const h = rnd(4); const c = choices(seq[h], HI_LET); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Which letter is missing?"], after: [HI(seq[h])], opts: c.opts, ans: c.ans, key: i + "-" + h }; } },
   { id: "h-first", mode: "written", e: "🖼️", t: "First letter of the picture", n: "चित्र के पहले अक्षर को लिखिए", kind: "quiz",
-    gen: () => { const p = pick(DATA.hiVowels); const c = choices(p[0], HI_LET); return { big: p[4], sub: `${p[2]} · ${p[3]}`, ask: [HI(p[2]), "_", "What is the first letter?"], after: [HI(`${p[0]} से ${p[2]}`)], opts: c.opts, ans: c.ans, key: p[0] }; } },
+    gen: () => { const p = pick(DATA.hiVowels); const c = choices(p[0], HI_LET); return { big: p[4], fill: p[0], sub: `${p[2]} · ${p[3]}`, ask: [HI(p[2]), "_", "What is the first letter?"], after: [HI(`${p[0]} से ${p[2]}`)], opts: c.opts, ans: c.ans, key: p[0] }; } },
   { id: "h-odd", mode: "written", e: "🧐", t: "Circle the different letter", n: "अलग अक्षर पर गोला लगाइए", kind: "quiz",
     gen: () => { const [a, b] = sample(HI_LET, 2); const opts = shuffle([a, a, a, b]); return { big: "🧐", ask: ["Three are the same. Which letter is different?"], after: [HI(b)], opts, ans: opts.indexOf(b), key: a + b }; } },
   { id: "h-circle", mode: "written", e: "⭕", t: "Circle the same letters", n: "ऊपर की पंक्ति में अक्षरों पर गोला लगाइए", kind: "find",
@@ -917,7 +922,7 @@ const SUBJECTS = [
       return { big: "🏠", ask: [j ? "Tap the joint family." : "Tap the small family."], after: [j ? "Yes! A joint family has grandparents, uncle, aunt and cousins too." : "Yes! A small family has father, mother, brother and sister."], opts: opts.map(o => `<span class="fam">${o}</span>`), ans: opts.indexOf(j ? jt : sm), key: String(j) + rnd(99), wide: true }; } },
   { id: "v-plant", mode: "written", e: "🌿", t: "First letter of the plant parts", kind: "quiz",
     help: "The parts are roots, stem, leaf, flower and fruit.",
-    gen: () => { const [p, l] = pick(DATA.plant); const c = choices(l, ["R", "S", "L", "F", "T", "P", "M"]); return { big: plantSVG(p), sub: p, ask: [`This is the ${p.toLowerCase()}. What is its first letter?`], after: [`${l} for ${p.toLowerCase()}`], opts: c.opts, ans: c.ans, key: p }; } },
+    gen: () => { const [p, l] = pick(DATA.plant); const c = choices(l, ["R", "S", "L", "F", "T", "P", "M"]); return { big: plantSVG(p), fill: l, sub: p, ask: [`This is the ${p.toLowerCase()}. What is its first letter?`], after: [`${l} for ${p.toLowerCase()}`], opts: c.opts, ans: c.ans, key: p }; } },
   { id: "v-health", mode: "written", e: "🥦", t: "Circle the odd one out: healthy or unhealthy", kind: "quiz",
     help: "Healthy: vegetables, milk, nuts, cheese, pulses, fruits. Unhealthy: burger, chocolate, toffees, French fries, soda, cake.",
     gen: () => { const odd = Math.random() < .5; const [main, other] = odd ? [DATA.healthy, DATA.unhealthy] : [DATA.unhealthy, DATA.healthy]; const o = pick(other); const opts = shuffle([...sample(main, 3), o]);
@@ -1422,6 +1427,7 @@ function runQuiz(a) {
     dots(qs.length, i, ok);
     body().innerHTML = `<div class="q">
       <div class="bigview ${q.bigCls || ""}">${q.big}</div>
+      ${q.fill !== undefined && !q.big.includes("blank") ? `<div class="ansline"><span class="nb blank ${q.fillCls || ""}"></span></div>` : ""}
       ${q.sub ? small(q.sub) : ""}
       <div class="row">${replayBtn}</div>
       <div class="opts ${q.wide ? "wide" : ""}">${q.opts.map((o, k) => `<button class="opt" data-o="${k}">${o}</button>`).join("")}</div></div>`;
