@@ -370,14 +370,1445 @@ button.scene{font:inherit;color:inherit;text-align:left;width:100%;border:3px so
 .rwhead small{color:var(--berry-soft)}
 .rwok{margin-left:auto;color:var(--ok);font-weight:800}
 .mbtn.rwlink{margin-top:8px;background:#f3ebff}
+.mascotav{display:grid;place-items:center;overflow:hidden;background:var(--blush)}
+.mascotav .mascot{width:44px;height:52px}
 </style>
 </head>
 <body>
 <canvas id="fx"></canvas>
 <div class="wrap" id="app"></div>
-<script src="data.js?v=10"></script>
-<script src="audio/manifest.js?v=10"></script>
-<script src="activities.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script>
+// Pictures that have no good emoji (drawn here so she sees the real thing)
+const PIC = {
+  cabbage: '<svg class="emo" viewBox="0 0 100 100" aria-label="cabbage"><circle cx="50" cy="56" r="40" fill="#79c267"/><path d="M12 62Q28 18 50 20Q72 18 88 62Q72 40 50 42Q28 40 12 62Z" fill="#a6db8c"/><circle cx="50" cy="56" r="23" fill="#cdeeb4"/><path d="M50 33V84M50 54Q36 46 28 58M50 54Q64 46 72 58M50 68Q38 62 32 74M50 68Q62 62 68 74" stroke="#5a9e48" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+  cauliflower: '<svg class="emo" viewBox="0 0 100 100" aria-label="cauliflower"><path d="M8 60Q16 96 50 94Q84 96 92 60Q72 80 50 76Q28 80 8 60Z" fill="#4f9d3e"/><g fill="#fbf6e4" stroke="#e2d6b0" stroke-width="1.5"><circle cx="24" cy="60" r="12"/><circle cx="76" cy="60" r="12"/><circle cx="34" cy="46" r="16"/><circle cx="66" cy="46" r="16"/><circle cx="50" cy="34" r="17"/><circle cx="50" cy="58" r="17"/></g><path d="M14 66Q28 86 44 72L36 64ZM86 66Q72 86 56 72L64 64Z" fill="#6cbf55"/></svg>',
+  pomegranate: '<svg class="emo" viewBox="0 0 100 100" aria-label="pomegranate"><circle cx="50" cy="58" r="36" fill="#d7263d"/><path d="M38 26L42 10L50 21L58 10L62 26Z" fill="#a61b2e"/><ellipse cx="36" cy="46" rx="9" ry="6" fill="#f47a88" opacity=".75"/></svg>',
+  tamarind: '<svg class="emo" viewBox="0 0 100 100" aria-label="tamarind"><g fill="#8b5a2b"><ellipse cx="22" cy="72" rx="15" ry="12"/><ellipse cx="42" cy="60" rx="15" ry="12"/><ellipse cx="62" cy="48" rx="15" ry="12"/><ellipse cx="80" cy="38" rx="12" ry="10"/></g><g fill="#a97447"><ellipse cx="20" cy="68" rx="5" ry="3"/><ellipse cx="40" cy="56" rx="5" ry="3"/><ellipse cx="60" cy="44" rx="5" ry="3"/></g><path d="M88 32Q93 24 97 22" stroke="#5c3a1a" stroke-width="3" fill="none"/></svg>',
+  sugarcane: '<svg class="emo" viewBox="0 0 100 100" aria-label="sugarcane"><rect x="28" y="20" width="13" height="78" rx="5" fill="#a4c442"/><rect x="54" y="12" width="13" height="86" rx="5" fill="#8db234"/><g stroke="#5f7d1f" stroke-width="3"><path d="M28 42h13M28 64h13M28 84h13M54 34h13M54 56h13M54 78h13"/></g><path d="M67 14Q86 0 96 8Q80 9 67 20ZM54 16Q34 0 20 6Q38 9 54 22Z" fill="#4c9a2a"/></svg>',
+};
+// All the exam-portion content, taken from the Blooming Buds LKG 1st Term portion sheet.
+const DATA = {
+  exams: [
+    { date: "2026-10-05", day: "Monday",    subjects: ["english"] },
+    { date: "2026-10-06", day: "Tuesday",   subjects: ["maths"] },
+    { date: "2026-10-07", day: "Wednesday", subjects: ["kannada", "rhymes"] },
+    { date: "2026-10-08", day: "Thursday",  subjects: ["hindi", "gk", "story"] },
+    { date: "2026-10-09", day: "Friday",    subjects: ["evs", "activity", "drawing"] },
+  ],
+
+  // ---------- English ----------
+  abc: [
+    ["A","Apple","🍎"],["B","Ball","⚽"],["C","Cat","🐱"],["D","Dog","🐶"],["E","Elephant","🐘"],
+    ["F","Fish","🐟"],["G","Goat","🐐"],["H","Hen","🐔"],["I","Ice-cream","🍦"],["J","Juice","🧃"],
+    ["K","Kite","🪁"],["L","Lion","🦁"],["M","Mango","🥭"],["N","Nest","🪺"],["O","Orange","🍊"],
+    ["P","Parrot","🦜"],["Q","Queen","👸"],["R","Rabbit","🐰"],["S","Sun","☀️"],["T","Tomato","🍅"],
+    ["U","Umbrella","☂️"],["V","Van","🚐"],["W","Watch","⌚"],["X","X-mas tree","🎄"],["Y","Yo-yo","🪀"],["Z","Zebra","🦓"],
+  ],
+  // how to say each phonic sound with a text-to-speech voice
+  phon: { a:"ah",b:"buh",c:"kuh",d:"duh",e:"eh",f:"fff",g:"guh",h:"hah",i:"ih",j:"juh",k:"kuh",l:"lll",m:"mmm",
+          n:"nnn",o:"aw",p:"puh",q:"kwuh",r:"rrr",s:"sss",t:"tuh",u:"uh",v:"vvv",w:"wuh",x:"ks",y:"yuh",z:"zzz" },
+  opposites: [["Good","Bad","😇","😈"],["Short","Long","✏️","📏"],["Down","Up","⬇️","⬆️"],["Stand","Sit","🧍","🪑"]],
+  sight: ["the","a","I","is","am","and","to","in","it","on","he","we","me","my","go","up","see","can","you","at"],
+  blend: [["cat","🐱"],["dog","🐶"],["hen","🐔"],["pig","🐷"],["sun","☀️"],["bus","🚌"],["cup","☕"],["bat","🦇"],
+          ["box","📦"],["bed","🛏️"],["net","🥅"],["pen","🖊️"],["map","🗺️"],["hat","👒"],["fox","🦊"],["bag","👜"],
+          ["ant","🐜"],["rat","🐀"],["van","🚐"],["jug","🫙"]],
+
+  // ---------- Maths ----------
+  numNames: ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen"],
+  countEmoji: ["🍎","⭐","🎈","🌸","🐟","🍓","🦋","🧁","🐞","🍭"],
+
+  // ---------- Kannada ----------
+  // [letter, how to say it, sound hint]
+  knVowels: [
+    ["ಅ","a","short 'a' as in 'about'"],["ಆ","aa","long 'aa' as in 'car'"],["ಇ","i","short 'i' as in 'sit'"],
+    ["ಈ","ee","long 'ee' as in 'see'"],["ಉ","u","short 'u' as in 'put'"],["ಊ","oo","long 'oo' as in 'moon'"],
+    ["ಋ","ru","'ru' as in 'Rushi'"],["ಎ","e","short 'e' as in 'egg'"],["ಏ","ae","long 'ae' as in 'name'"],
+    ["ಐ","ai","'ai' as in 'eye'"],["ಒ","o","short 'o' as in 'only'"],["ಓ","oh","long 'oh' as in 'go'"],
+    ["ಔ","au","'au' as in 'out'"],["ಅಂ","am","'um' as in 'umbrella'"],["ಅಃ","aha","'a-ha' with a breath"],
+  ],
+  knConsonants: [
+    ["ಕ","ka","as in 'cup'"],["ಖ","kha","'ka' with a puff of air"],["ಗ","ga","as in 'gum'"],["ಘ","gha","'ga' with a puff of air"],["ಙ","nga","as in 'sing'"],
+    ["ಚ","cha","as in 'chair'"],["ಛ","chha","'cha' with a puff of air"],["ಜ","ja","as in 'jug'"],["ಝ","jha","'ja' with a puff of air"],["ಞ","nya","as in 'canyon'"],
+    ["ಟ","Ta","hard 'T', tongue curled back, as in 'top'"],["ಠ","Tha","hard 'T' with a puff of air"],["ಡ","Da","hard 'D', tongue curled back, as in 'drum'"],["ಢ","Dha","hard 'D' with a puff of air"],["ಣ","Na","hard 'N', tongue curled back"],
+    ["ತ","ta","soft 't', tongue on teeth, as in Hindi 'tamatar'"],["ಥ","tha","as in 'thumb'"],["ದ","da","soft 'd', tongue on teeth, as in 'the'"],["ಧ","dha","soft 'd' with a puff of air"],["ನ","na","as in 'nut'"],
+    ["ಪ","pa","as in 'pup'"],["ಫ","pha","'pa' with a puff of air"],["ಬ","ba","as in 'bus'"],["ಭ","bha","'ba' with a puff of air"],["ಮ","ma","as in 'mum'"],
+    ["ಯ","ya","as in 'yum'"],["ರ","ra","as in 'run'"],["ಲ","la","as in 'love'"],["ವ","va","as in 'van'"],["ಶ","sha","as in 'shut'"],
+    ["ಷ","Sha","'sha' with tongue curled back"],["ಸ","sa","as in 'sun'"],["ಹ","ha","as in 'hut'"],["ಳ","La","hard 'L', tongue curled back"],
+  ],
+  // [kannada, how to say it, english, emoji]
+  knFruits: [
+    ["ಸೇಬು","sae-bu","Apple","🍎"],["ಬಾಳೆಹಣ್ಣು","baa-le-han-nu","Banana","🍌"],["ಮಾವಿನಹಣ್ಣು","maa-vi-na-han-nu","Mango","🥭"],
+    ["ಕಿತ್ತಳೆ","kit-ta-le","Orange","🍊"],["ದ್ರಾಕ್ಷಿ","draak-shi","Grapes","🍇"],["ಕಲ್ಲಂಗಡಿ","kal-lan-ga-Di","Watermelon","🍉"],
+    ["ಅನಾನಸ್","a-naa-nas","Pineapple","🍍"],["ತೆಂಗಿನಕಾಯಿ","ten-gi-na-kaa-yi","Coconut","🥥"],["ನಿಂಬೆಹಣ್ಣು","nim-be-han-nu","Lemon","🍋"],
+    ["ಸ್ಟ್ರಾಬೆರಿ","straw-be-ri","Strawberry","🍓"],
+  ],
+  knVeg: [
+    ["ಟೊಮೆಟೊ","to-me-to","Tomato","🍅"],["ಆಲೂಗಡ್ಡೆ","aa-loo-gad-de","Potato","🥔"],["ಈರುಳ್ಳಿ","ee-rul-li","Onion","🧅"],
+    ["ಗಜ್ಜರಿ","gaj-ja-ri","Carrot","🥕"],["ಬದನೆಕಾಯಿ","ba-da-ne-kaa-yi","Brinjal","🍆"],["ಸೌತೆಕಾಯಿ","sau-te-kaa-yi","Cucumber","🥒"],
+    ["ಮೆಣಸಿನಕಾಯಿ","me-Na-si-na-kaa-yi","Green chilli","🌶️"],["ಎಲೆಕೋಸು","e-le-koh-su","Cabbage",PIC.cabbage],["ಹೂಕೋಸು","hoo-koh-su","Cauliflower",PIC.cauliflower],
+    ["ಕುಂಬಳಕಾಯಿ","kum-ba-La-kaa-yi","Pumpkin","🎃"],["ಬಟಾಣಿ","ba-Taa-Ni","Peas","🫛"],["ಬೆಳ್ಳುಳ್ಳಿ","bel-lul-li","Garlic","🧄"],
+    ["ಮೆಕ್ಕೆಜೋಳ","mek-ke-joh-La","Corn","🌽"],
+  ],
+  // picture words for "first letter" and "match" games: [letter, word, how to say, english, emoji]
+  knPics: [
+    ["ಅ","ಅನಾನಸ್","a-naa-nas","pineapple","🍍"],["ಆ","ಆನೆ","aa-ne","elephant","🐘"],["ಇ","ಇಲಿ","i-li","mouse","🐭"],
+    ["ಈ","ಈರುಳ್ಳಿ","ee-rul-li","onion","🧅"],["ಉ","ಉಂಗುರ","un-gu-ra","ring","💍"],["ಊ","ಊಟ","oo-Ta","meal","🍛"],
+    ["ಎ","ಎಲೆ","e-le","leaf","🍃"],["ಏ","ಏಣಿ","ae-Ni","ladder","🪜"],["ಒ","ಒಂಟೆ","on-Te","camel","🐫"],
+    ["ಓ","ಓದು","oh-du","read","📖"],["ಔ","ಔಷಧ","au-sha-dha","medicine","💊"],["ಕ","ಕಮಲ","ka-ma-la","lotus","🪷"],
+    ["ಗ","ಗಡಿಯಾರ","ga-Di-yaa-ra","clock","🕰️"],["ಚ","ಚಮಚ","cha-ma-cha","spoon","🥄"],["ಜ","ಜಿಂಕೆ","jin-ke","deer","🦌"],
+    ["ಟ","ಟೊಮೆಟೊ","to-me-to","tomato","🍅"],["ಡ","ಡಬ್ಬ","Dab-ba","box","📦"],["ತ","ತೆಂಗಿನಕಾಯಿ","ten-gi-na-kaa-yi","coconut","🥥"],
+    ["ದ","ದೋಣಿ","doh-Ni","boat","⛵"],["ನ","ನವಿಲು","na-vi-lu","peacock","🦚"],["ಪ","ಪುಸ್ತಕ","pus-ta-ka","book","📕"],
+    ["ಬ","ಬಾಳೆಹಣ್ಣು","baa-le-han-nu","banana","🍌"],["ಮ","ಮೀನು","mee-nu","fish","🐟"],["ರ","ರೈಲು","rai-lu","train","🚆"],
+    ["ಲ","ಲಾರಿ","laa-ri","lorry","🚚"],["ಸ","ಸೇಬು","sae-bu","apple","🍎"],["ಹ","ಹಸು","ha-su","cow","🐄"],
+  ],
+
+  // ---------- Hindi ----------
+  // अ से अनार, आ से आम, इ से इमली, ई से ईख, उ से उल्लू, ऊ से ऊन, ऋ से ऋषि
+  hiVowels: [["अ","a","अनार","pomegranate",PIC.pomegranate],["आ","aa","आम","mango","🥭"],["इ","i","इमली","tamarind",PIC.tamarind],
+             ["ई","ee","ईख","sugarcane",PIC.sugarcane],["उ","u","उल्लू","owl","🦉"],["ऊ","oo","ऊन","wool","🧶"],["ऋ","ri","ऋषि","sage","🧘"]],
+  hiFruits: [["सेब","seb","Apple","🍎"],["केला","kela","Banana","🍌"],["आम","aam","Mango","🥭"],["संतरा","santra","Orange","🍊"],
+             ["अंगूर","angoor","Grapes","🍇"],["तरबूज","tarbooz","Watermelon","🍉"],["अनानास","ananas","Pineapple","🍍"],
+             ["नारियल","nariyal","Coconut","🥥"],["नींबू","neembu","Lemon","🍋"],["अनार","anaar","Pomegranate",PIC.pomegranate],["स्ट्रॉबेरी","strawberry","Strawberry","🍓"]],
+  hiVeg: [["टमाटर","tamatar","Tomato","🍅"],["आलू","aalu","Potato","🥔"],["प्याज़","pyaaz","Onion","🧅"],["गाजर","gaajar","Carrot","🥕"],
+          ["बैंगन","baingan","Brinjal","🍆"],["खीरा","kheera","Cucumber","🥒"],["मिर्च","mirch","Chilli","🌶️"],
+          ["पत्तागोभी","patta gobhi","Cabbage",PIC.cabbage],["फूलगोभी","phool gobhi","Cauliflower",PIC.cauliflower],["कद्दू","kaddu","Pumpkin","🎃"],
+          ["मटर","matar","Peas","🫛"],["लहसुन","lahsun","Garlic","🧄"],["भुट्टा","bhutta","Corn","🌽"]],
+
+  // ---------- Rhymes ----------
+  // cues: picture steps in the order the rhyme goes (not the words themselves).
+  // The words come from her book: a parent types them in once, and they are saved on this device.
+  rhymes: [
+    { id:"teapot", title:"I am a little tea pot", e:"🫖",
+      cues:[["🫖","little tea pot"],["🤏","short and stout"],["🤚","my handle"],["💧","my spout"],["♨️","water boiling"],["🫗","pour me out"]],
+      act:"One hand on the hip is the handle. The other arm out is the spout. Tip over at the end to pour." },
+    { id:"school", title:"I love my School", e:"🏫",
+      cues:[["🏫","first day at school"],["😢","cried and cried"],["🚫","no laugh, no play"],["😊","happy every day"],["🔤","ABC and 123"],["🎨","draw, sing, dance, play"]],
+      act:"Pretend to cry for the first part, then a big smile for 'happy every day'." },
+    { id:"train", title:"The Train Song", e:"🚂",
+      cues:[["🚂","clickety-clack"],["🔁","over and over"],["🛤️","wheels on the track"],["⏩","faster and faster"],["🎵","song of the train"],["👂","I love to hear"]],
+      act:"Arms go round like train wheels. Get faster on 'faster and faster'." },
+    { id:"apple", title:"Me an Apple", e:"🍎",
+      cues:[["🍎","if I were an apple"],["🌳","grew on a tree"],["⬇️","drop down"],["😊","on a nice child like me"]],
+      act:"Hands up high like a tree, then drop down and point to yourself." },
+    { id:"bath", title:"After a bath", e:"🛁",
+      cues:[["🛁","after a bath"],["💪","try, try, try"],["🧻","wipe till dry, dry, dry"],["✋","hands, fingers, toes"],["🦵","two wet legs"],["👃","a shiny nose"]],
+      act:"Pretend to rub with a towel. Touch hands, toes, legs and nose as you say them." },
+    { id:"family", title:"Here is the Family", e:"👨‍👩‍👧‍👦",
+      cues:[["👍","father (thumb), short and stout"],["☝️","mother (pointer finger)"],["👦","brother (middle finger), tall"],["👧","sister (ring finger), with dolly"],["👶","baby (little finger), still to grow"],["🖐️","the family, all in a row"]],
+      act:"A finger rhyme. Hold up each finger as you meet each person, then show the whole hand at the end." },
+    { id:"cat", title:"The Cat", e:"🐱",
+      cues:[["🐱","little CAT"],["😺","fine and FAT"],["🟦","on a MAT"],["👒","with a HAT"],["🤚","give a PAT"],["😊","pleased with THAT"]],
+      act:"Every line ends with an -AT word: cat, fat, mat, hat, pat, that. Clap on each -AT word." },
+    { id:"mickey", title:"Mickey Mouse", e:"🐭",
+      cues:[["🐭","Mickey on a railway"],["🪨","picking up stones"],["🚂","down came an engine"],["🦴","broke Mickey's bones"],["😢","'Ah! That's not fair'"],["🤷","driver: 'I don't care!'"]],
+      act:"Bend down to pick stones. Make a sad face for Mickey and shrug for the driver." },
+    { id:"fingers", title:"Little Fingers", e:"🖐️",
+      cues:[["🖐️","open them, shut them"],["👏","a little clap"],["🖐️","open them, shut them"],["🫳","lay them in your lap"],["🐛","creep up to your chin"],["👄","open your mouth, don't let them in"]],
+      act:"An action rhyme. Open and shut both hands, clap, put hands on lap, then walk fingers up to the chin." },
+    { id:"polly", title:"Polly put the Kettle On", e:"☕",
+      cues:[["👧","Polly"],["🫖","put the kettle on"],["🔁","kettle on, kettle on"],["☕","let's all have tea"]],
+      act:"The kettle line comes three times. Pretend to pour tea at the end." },
+  ],
+  knRhymes: [
+    { id:"kaage", title:"ಒಂದು ಕಾಗೆ ಬಂದಿತು", en:"Ondu Kaage Banditu (One crow came)", e:"🐦‍⬛",
+      gist:"A counting rhyme from 1 to 5. Each line starts with the next number and says one thing the crow did: came, ate grains, laid eggs, cawed, flew.",
+      cues:[["1️⃣","ಒಂದು ondu · came"],["2️⃣","ಎರಡು eraDu · ate grains"],["3️⃣","ಮೂರು mooru · laid eggs"],["4️⃣","ನಾಲ್ಕು naalku · cawed"],["5️⃣","ಐದು aidu · flew"]],
+      words:[["ಒಂದು","on-du","one"],["ಎರಡು","e-ra-Du","two"],["ಮೂರು","moo-ru","three"],["ನಾಲ್ಕು","naal-ku","four"],["ಐದು","ai-du","five"],
+             ["ಕಾಗೆ","kaa-ge","crow"],["ಬಂದಿತು","ban-di-tu","came"],["ಕಾಳು","kaa-Lu","grains"],["ತಿಂದಿತು","tin-di-tu","ate"],
+             ["ಮೊಟ್ಟೆ","mot-te","egg"],["ಇಟ್ಟಿತು","it-ti-tu","laid"],["ಸಲ","sa-la","times"],["ಕೂಗಿತು","koo-gi-tu","cawed (called out)"],["ಹಾರಿತು","haa-ri-tu","flew"]] },
+    { id:"naayi", title:"ನಾಯಿಮರಿ ನಾಯಿಮರಿ", en:"Naayimari Naayimari (Little puppy)", e:"🐶",
+      gist:"A question-and-answer rhyme. The child asks the puppy if it wants a snack. The puppy says yes, a snack and water, all of it. Why? So it can eat, grow strong, and guard the house.",
+      cues:[["🐶","child asks the puppy"],["🍪","want a snack?"],["💧","snack and water, all of it"],["❓","why do you want it?"],["💪","to grow strong"],["🏠","and guard the house"]],
+      words:[["ನಾಯಿಮರಿ","naa-yi-ma-ri","puppy"],["ತಿಂಡಿ","tin-Di","snack"],["ಬೇಕೆ?","bae-ke?","do you want?"],["ಬೇಕು","bae-ku","want"],
+             ["ತೀರ್ಥ","teer-tha","water (to drink)"],["ಎಲ್ಲ","el-la","all of it"],["ನಿನಗೆ","ni-na-ge","for you"],["ಏಕೆ","ae-ke","why"],
+             ["ತಿಂದು","tin-du","after eating"],["ಗಟ್ಟಿಯಾಗಿ","gat-ti-yaa-gi","strong"],["ಮನೆಯ","ma-ne-ya","the house"],["ಕಾಯಬೇಕು","kaa-ya-bae-ku","must guard"]] },
+  ],
+  hiRhymes: [
+    { id:"titli", title:"तितली", en:"Titli (Butterfly)", e:"🦋",
+      gist:"A funny rhyme. A butterfly tries to fly but can't, so she takes a bus. She gets no seat and starts crying. The driver calls her over, and she tells him off.",
+      cues:[["🦋","titli flies"],["🚫","can't fly"],["🚌","goes by bus"],["💺","gets no seat"],["😢","starts crying"],["🧑‍✈️","driver calls her"],["😤","titli says 'hat!'"]],
+      act:"Flap arms like wings, then pretend to sit in a bus and cry." },
+    { id:"chidiya", title:"चिड़िया", en:"Chidiya (Little bird)", e:"🐦",
+      gist:"A little bird says chee chee, chur chur. It flies fur fur, hops and sings, and wakes me up every morning.",
+      cues:[["🐦","chee chee chur chur"],["🪽","fur fur, flying"],["🎶","hops and sings"],["🌅","wakes me every morning"]],
+      act:"Flap arms for flying, hop for 'phudak phudak', and stretch like waking up." },
+  ],
+
+  // ---------- GK ----------
+  gk: [
+    { q:"What is your name?", a:"My name is Krishvi.", e:"👧" },
+    { q:"What is your school name?", a:"Blooming Buds Pre School.", e:"🏫" },
+    { q:"In which class are you studying?", a:"I am in LKG.", e:"🎒" },
+    { q:"Who is the founder of Blooming Buds?", a:"{founder}", e:"🌷", editable:"founder" },
+    { q:"How many days are there in a week?", a:"Seven days. Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.", e:"📅" },
+    { q:"Which is our country?", a:"India.", e:"🇮🇳" },
+    { q:"Which is our national animal?", a:"Tiger.", e:"🐅" },
+    { q:"Which is our national bird?", a:"Peacock.", e:"🦚" },
+    { q:"Which is our national flower?", a:"Lotus.", e:"🪷" },
+    { q:"Which is our national tree?", a:"Banyan tree.", e:"🌳" },
+    { q:"Which is our national anthem?", a:"Jana Gana Mana.", e:"🎵" },
+    { q:"Which is our national currency?", a:"Rupee.", e:"₹" },
+    { q:"Which is our national flag?", a:"Tiranga, the tricolour flag. Saffron, white and green, with a blue Ashoka Chakra.", e:"🇮🇳" },
+    { q:"Who is the Prime Minister of India?", a:"Narendra Modi.", e:"🇮🇳" },
+    { q:"What are clean habits?", a:"Brush my teeth, take a bath every day, wash my hands before eating, cut my nails, and comb my hair.", e:"🧼" },
+    { q:"Who is the Chief Minister of Karnataka?", a:"Siddaramaiah.", e:"🏛️" },
+  ],
+  symbols: [["animal","Tiger","🐅"],["bird","Peacock","🦚"],["flower","Lotus","🪷"],["tree","Banyan tree","🌳"],["currency","Rupee","₹"],["flag","Tiranga","🇮🇳"]],
+  days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+
+  // ---------- Story (told in simple words) ----------
+  stories: [
+    { id:"hare", title:"The Hare and the Tortoise", e:"🐢",
+      tell:[["🐇🐢","A hare and a tortoise decided to run a race."],
+            ["😏","The hare laughed: \"You are so slow! I can win any race.\" The tortoise said: \"We shall see.\""],
+            ["🏁","The race began. The hare ran very fast."],
+            ["😴","The hare was far ahead, so he stopped and took a nap under a tree."],
+            ["🐢","The tortoise did not stop. Slowly, slowly, he kept walking."],
+            ["🏆","The tortoise reached the winning post before the hare woke up!"]],
+      moral:"Slow and steady wins the race.",
+      steps:["🐇 The hare says: I can win any race!","🏁 The race begins.","😴 The hare takes a nap.","🐢 The tortoise keeps walking.","🏆 The tortoise wins!"] },
+    { id:"fox", title:"The Fox and the Grapes", e:"🦊",
+      tell:[["🦊","One day a hungry fox was walking."],
+            ["🍇","He saw a bunch of grapes hanging from a vine."],
+            ["⬆️","He wanted the grapes, so he jumped. And he jumped again."],
+            ["😞","But the grapes were too high. He could not get them."],
+            ["🚶","He said, \"The grapes are sour!\" and walked away."]],
+      moral:"It's easy to dislike what you cannot have.",
+      steps:["🦊 A fox sees grapes on a vine.","⬆️ He jumps and jumps again.","😞 He cannot get the grapes.","🚶 He says 'The grapes are sour!' and walks away."] },
+  ],
+
+  // ---------- EVS (from her EVS book) ----------
+  manners: [["🙏","Greet elders","Say 'Good morning' to elders and teachers."],["🤲","Share","Share toys and food with friends."],
+            ["🧍","Wait for your turn","Stand in the line and wait."],["🤫","Speak softly","Don't shout in class."],
+            ["🤧","Cover your mouth","Cover your mouth when you sneeze or cough."],["🧸","Keep things back","Put toys back in their place."],
+            ["🗑️","Use the dustbin","Throw waste in the dustbin."],["👂","Listen","Listen when others are talking."]],
+  golden: [["💖","Thank you","\"Thank you for the snacks, Mom!\""],["😔","Sorry","\"I am sorry, I broke your toy.\""],
+           ["🙏","Please","\"Yes, please come in.\""],["🙋","Excuse me","\"Excuse me, Sir.\""],
+           ["🤝","May I","\"May I come in?\"  \"May I help you, Mom?\""],["🤗","You are welcome","Say it when someone thanks you."]],
+  houses: [["🛖","Hut","Made of mud and straw."],["🏢","Flat / Apartment","Many homes in one tall building."],["🏡","Bungalow","A big house with a garden."],
+           ["🧊","Igloo","A house made of ice blocks."],["⛺","Tent","A cloth house for camping."],["🛥️","Houseboat","A house on water."],
+           ["🚐","Caravan","A house on wheels."],["🌳","Tree house","A house up in a tree."]],
+  // from her EVS book, "Different rooms in a House"
+  rooms: [["🍳","Kitchen","The kitchen is the place where food is cooked. We also eat our meals and drink water here."],
+          ["🛏️","Bedroom","The bedroom is the place where we sleep and rest. We keep our bed and toys here."],
+          ["🛋️","Living room","The living room is where we sit together with our family. We talk, play, and watch TV here."],
+          ["🛁","Bathroom","The bathroom is the place where we take a bath. We wash our hands and brush our teeth here."]],
+  // [question, answer room]
+  roomQs: [["Where is food cooked?","Kitchen"],["Where do we eat our meals and drink water?","Kitchen"],
+           ["Where do we sleep and rest?","Bedroom"],["Where do we keep our bed and toys?","Bedroom"],
+           ["Where do we sit together with our family?","Living room"],["Where do we watch TV?","Living room"],
+           ["Where do we take a bath?","Bathroom"],["Where do we brush our teeth?","Bathroom"]],
+  // from her EVS book, "Good manners in school: safety rules at school". ok = good thing to do
+  safety: [["🪑","Do not climb or stand on the desk.","Climbing on the desk",0,"🧗"],["🪜","Do not run up and down the stairs.","Running on the stairs",0,"🏃"],
+           ["🏫","Do not run in the classroom.","Running in the classroom",0,"🏃‍♀️"],["🤚","Do not push anyone.","Pushing a friend",0,"🫸"],
+           ["🚶‍♀️🚶🚶‍♂️","Walk in a line.","Walking in a line",1,""],["🚪","Know all the exits.","Knowing the way out",1,""]],
+  myschool: [
+    { q:"What is the name of your school?", a:"Blooming Buds Pre School.", e:"🏫" },
+    { q:"In which class are you?", a:"LKG.", e:"🎒" },
+    { q:"What is your teacher's name?", a:"{teacher}", e:"👩‍🏫", editable:"teacher" },
+    { q:"What do you do in school?", a:"I learn ABC and 123. I draw, sing, dance and play with my friends.", e:"🎨" },
+    { q:"What is there in your school?", a:"Classroom, playground, toys, swings and slides.", e:"🛝" },
+  ],
+  // [name, picture, what it does]
+  body: [["Eye","👁️","see"],["Nose","👃","smell"],["Mouth","👄","eat and talk"],["Ear","👂","hear"],["Hand","✋","hold and clap"],
+         ["Leg","🦵","walk and run"],["Foot","🦶","stand"],["Head","🙂","think"],["Neck","🦒","turn my head"],["Elbow","💪","bend my arm"]],
+  bodyMore: ["Shoulder","Elbow","Wrist","Thumb","Finger","Thigh","Knee","Heel","Foot","Toe"],
+  family: { small:["Father","Mother","Brother","Sister"], joint:["Grandfather","Grandmother","Father","Mother","Uncle","Aunt","Brother","Sister","Cousin"] },
+  plant: [["Roots","R"],["Stem","S"],["Leaf","L"],["Flower","F"],["Fruit","F"]],
+  healthy: [["🥦","Vegetables"],["🥛","Milk"],["🥜","Nuts"],["🧀","Cheese"],["🫘","Pulses"],["🍎","Fruits"]],
+  unhealthy: [["🍔","Burger"],["🍫","Chocolate"],["🍬","Toffees"],["🍟","French fries"],["🥤","Soda"],["🍰","Cake"]],
+
+  // ---------- Activity ----------
+  flowers: [["🌹","Rose"],["🌻","Sunflower"],["🪷","Lotus"],["🌷","Tulip"],["🌺","Hibiscus"],["🌼","Marigold"]],
+  fruits: [["🍎","Apple"],["🍌","Banana"],["🥭","Mango"],["🍇","Grapes"],["🍊","Orange"],["🍉","Watermelon"],["🍍","Pineapple"],["🍓","Strawberry"],["🥥","Coconut"],["🍐","Pear"],["🍒","Cherry"],["🍋","Lemon"]],
+  veg: [["🍅","Tomato"],["🥕","Carrot"],["🥔","Potato"],["🧅","Onion"],["🍆","Brinjal"],["🥒","Cucumber"],["🌽","Corn"],["🌶️","Chilli"],[PIC.cauliflower,"Cauliflower"],["🫛","Peas"],[PIC.cabbage,"Cabbage"],["🎃","Pumpkin"]],
+
+
+  // ---------- Voice ----------
+  // phonics keyword pictures (each word starts with the letter's short sound)
+  phonicWords: { a:["apple","🍎"],b:["ball","⚽"],c:["cat","🐱"],d:["dog","🐶"],e:["egg","🥚"],f:["fish","🐟"],g:["goat","🐐"],
+    h:["hen","🐔"],i:["insect","🐛"],j:["jam","🫙"],k:["kite","🪁"],l:["lion","🦁"],m:["monkey","🐒"],n:["nest","🪺"],
+    o:["octopus","🐙"],p:["parrot","🦜"],q:["queen","👸"],r:["rabbit","🐰"],s:["sun","☀️"],t:["tiger","🐯"],u:["umbrella","☂️"],
+    v:["van","🚐"],w:["watch","⌚"],x:["fox","🦊"],y:["yo-yo","🪀"],z:["zebra","🦓"] },
+  // how the voice should say each letter's name
+  letterNames: { A:"ay",B:"bee",C:"see",D:"dee",E:"ee",F:"eff",G:"jee",H:"aitch",I:"eye",J:"jay",K:"kay",L:"ell",M:"em",N:"en",
+    O:"oh",P:"pee",Q:"cue",R:"are",S:"ess",T:"tee",U:"you",V:"vee",W:"double you",X:"ex",Y:"why",Z:"zed" },
+  lines: {
+    greet: ["Good morning, Krishvi!","Good afternoon, Krishvi!","Good evening, Krishvi!"],
+    welcome: "Welcome to your Star Garden! Let's learn and play together.",
+    pick: ["Pick a game, Krishvi!","What shall we learn today, Krishvi?","Let's play, Krishvi!"],
+    start: ["Let's go, Krishvi!","Ready, Krishvi? Let's start!","Here we go!"],
+    praise: ["Well done, Krishvi!","Super!","Wow! You are so clever!","Great job!","Yay! That's right!","You are a star!","Excellent!","Fantastic, Krishvi!","Very good!","Yay!","Yay, Krishvi!"],
+    tryAgain: ["Oops! Try again.","Almost! Try once more.","Let's try again, Krishvi."],
+    finish: ["Yay! You did it, Krishvi! I am so proud of you!","Hooray! All done! You are a super star!","Wonderful, Krishvi! You finished the game!"],
+    sticker: "You won a new sticker!",
+    level: "Wow! You reached a new level!",
+    mission: "You finished today's mission! Five bonus stars for you!",
+    yourTurn: "Your turn!",
+    saidIt: ["Well done!","Beautiful!","Super, Krishvi!","Lovely!"],
+    sing: ["Lovely singing, Krishvi!","What a beautiful voice!"],
+    story: ["What a lovely story, Krishvi!"],
+    draw: ["What a beautiful drawing, Krishvi!"],
+    write: ["Beautiful writing!","Lovely writing, Krishvi!","Neat work!"],
+  },
+  drawPrompts: ["🍎 an apple","🏠 a house","🌸 a flower","☀️ the sun","🐟 a fish","🎈 a balloon","🌳 a tree","⭐ a star","🦋 a butterfly","🌈 a rainbow"],
+  stickers: ["🦄","🌈","🧁","🎀","🌸","🦋","🍓","👑","🐰","🌟","🍭","🐬","🌷","🎠","🐱","🦩","🍩","🎈","🐞","🪅","🌻","🐼","🍉","💖","🐣","🧚‍♀️","🎂","🐠","🍒","🦜","🌺","🐨","🍦","💎","🪄","🐝","🧸","🌙","🍀","🐧","🎨","🐢","🍪","🌼","🦊","🍰","🐳","🎵","🌴","🐿️"],
+};
+
+</script>
+<script src="audio/manifest.js?v=11"></script>
+<script>
+// Small helpers shared by the games
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sample = (a, n) => shuffle(a).slice(0, n);
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+// options = answer + (n-1) distinct distractors, shuffled; returns {opts, ans}
+function choices(answer, pool, n = 4, key = x => x) {
+  const others = shuffle(pool.filter(p => key(p) !== key(answer))).slice(0, n - 1);
+  const opts = shuffle([answer, ...others]);
+  return { opts, ans: opts.findIndex(o => key(o) === key(answer)) };
+}
+
+// Speech is a list of segments. Each segment is a pre-recorded clip:
+//   "text" English · "L|A" letter name · "ph|a" phonic sound · "kn|…" Kannada · "hi|…" Hindi · "_" short pause · "__" long pause
+const LN = c => "L|" + String(c).toUpperCase();
+const PH = c => "ph|" + c.toLowerCase();
+const KN = t => "kn|" + t;
+const HI = t => "hi|" + t;
+const N = n => String(n);
+const spell = w => w.toUpperCase().split("").filter(c => /[A-Z]/.test(c)).map(LN);
+
+// a row of boxes; the box at `hole` is empty and fills in when she answers
+const BOXES = (arr, hole, cls = "") => `<span class="seqrow">${arr.map((x, i) => i === hole ? `<span class="nb blank ${cls}"></span>` : `<span class="nb ${cls}">${x}</span>`).join("")}</span>`;
+const near = (ans, step = 1) => [ans - 2 * step, ans - step, ans + step, ans + 2 * step, ans + 10].filter(x => x > 0 && x !== ans);
+const UP = DATA.abc.map(a => a[0]);
+const LOW = UP.map(c => c.toLowerCase());
+const KN_ALL = [...DATA.knVowels, ...DATA.knConsonants];
+const KN_LET = KN_ALL.map(k => k[0]);
+const HI_LET = DATA.hiVowels.map(h => h[0]);
+const knSay = ch => (KN_ALL.find(k => k[0] === ch) || [, ch])[1];
+const hiSay = ch => (DATA.hiVowels.find(k => k[0] === ch) || [, ch])[1];
+const small = t => `<small class="p">${t}</small>`;
+const famEmoji = { Father: "👨", Mother: "👩", Brother: "👦", Sister: "👧", Grandfather: "👴", Grandmother: "👵", Uncle: "🧔", Aunt: "👩‍🦱", Cousin: "🧒" };
+
+// Simple plant diagram with one part circled
+function plantSVG(part) {
+  const ring = { Roots: [110, 205, 48, 32], Stem: [110, 118, 18, 50], Leaf: [78, 118, 36, 22], Flower: [110, 52, 34, 34], Fruit: [160, 146, 22, 22] }[part];
+  return `<svg viewBox="0 0 220 240" width="220" height="240" role="img" aria-label="plant">
+    <rect x="0" y="165" width="220" height="75" rx="12" fill="#c8a27a"/>
+    <g fill="none" stroke="#7a5230" stroke-width="4" stroke-linecap="round"><path d="M110 165 L110 215 M110 180 L85 205 M110 185 L138 212 M110 200 L95 228 M110 198 L128 230"/></g>
+    <rect x="104" y="70" width="12" height="96" rx="5" fill="#46a843"/>
+    <ellipse cx="78" cy="118" rx="30" ry="14" fill="#5cc85a" transform="rotate(-25 78 118)"/>
+    <ellipse cx="142" cy="104" rx="30" ry="14" fill="#5cc85a" transform="rotate(25 142 104)"/>
+    ${[0, 72, 144, 216, 288].map(a => `<ellipse cx="110" cy="40" rx="11" ry="20" fill="#f7a8d8" transform="rotate(${a} 110 58)"/>`).join("")}
+    <circle cx="110" cy="58" r="9" fill="#ffd23f"/>
+    <path d="M116 140 L150 140" stroke="#46a843" stroke-width="5"/><circle cx="160" cy="146" r="14" fill="#ff5a5a"/>
+    <ellipse cx="${ring[0]}" cy="${ring[1]}" rx="${ring[2]}" ry="${ring[3]}" fill="none" stroke="#ff3e8a" stroke-width="5" stroke-dasharray="8 5"/>
+  </svg>`;
+}
+
+// ---------- Subjects (in exam order) ----------
+// kinds: cards (listen & repeat) · sayit (asked out loud, she answers out loud) · quiz · match · order · find · trace · chart · rhyme · story · draw
+const SUBJECTS = [
+// ===================== ENGLISH =====================
+{ id: "english", name: "English", e: "Aa", c: "var(--c-english)", acts: [
+  { id: "e-phonics", mode: "oral", e: "🔤", t: "Phonic sounds a to z", kind: "cards",
+    help: "Listen to the sound, then she says it: 'a, a, apple'. Say the sound, not the letter name.",
+    deck: () => LOW.map(l => { const [w, em] = DATA.phonicWords[l]; return { face: l, pic: em, sub: w, say: [PH(l), "_", PH(l), "_", w], yt: `jolly phonics ${l} song` }; }) },
+  { id: "e-song", mode: "oral", e: "🎵", t: "Phonic song a to e", kind: "cards",
+    help: "Sing it together: 'A for apple, a, a, apple'.",
+    deck: () => ["a", "b", "c", "d", "e"].map(l => { const [w, em] = DATA.phonicWords[l]; return { face: em, lab: `${l.toUpperCase()} for ${w}`, sub: `${l}, ${l}, ${w}`, say: [`${l.toUpperCase()} for ${w}`.replace(/^([A-Z])/, m => m), "_", PH(l), PH(l), w] }; }) },
+  { id: "e-abc", mode: "oral", e: "🍎", t: "A for Apple to Z for Zebra", kind: "cards",
+    help: "If her book uses a different word for a letter (for example J for Jug), use the book's word.",
+    deck: () => DATA.abc.map(([L, w, em]) => ({ face: em, lab: `${L} for ${w}`, say: [`${L} for ${w}`] })) },
+  { id: "e-opp", mode: "oral", e: "↕️", t: "Opposite words", kind: "cards",
+    deck: () => DATA.opposites.map(([a, b, ea, eb]) => ({ face: `${ea} ${eb}`, lab: `${a} × ${b}`, say: [a, "_", b, "_", `The opposite of ${a.toLowerCase()} is ${b.toLowerCase()}`] })) },
+  { id: "e-oppsay", mode: "oral", e: "🗣️", t: "Say the opposite", kind: "sayit",
+    items: () => shuffle(DATA.opposites.flatMap(([a, b, ea, eb]) => [[a, b, ea, eb], [b, a, eb, ea]])).map(([a, b, ea, eb]) => ({ big: ea, sub: a, ask: [`What is the opposite of ${a.toLowerCase()}?`], ans: `${eb} ${b}`, ansSay: [b] })) },
+
+  { id: "e-cap", mode: "written", e: "✍️", t: "Write capital letters A to Z", kind: "trace", chars: UP, say: c => [LN(c)] },
+  { id: "e-small", mode: "written", e: "✏️", t: "Write small letters a to z", kind: "trace", chars: LOW, say: c => ["small", LN(c)] },
+  { id: "e-after", mode: "written", e: "➡️", t: "What comes after?", kind: "quiz",
+    gen: () => { const cap = Math.random() < .5, L = cap ? UP : LOW, i = rnd(25); const c = choices(L[i + 1], L); return { big: BOXES([L[i], L[i + 1]], 1), bigCls: "txt", fill: L[i + 1], ask: ["What comes after", LN(L[i]), "?"], after: [LN(L[i]), "_", LN(L[i + 1])], opts: c.opts, ans: c.ans, key: L[i] }; } },
+  { id: "e-vowels", mode: "written", e: "🅰️", t: "Find the vowels", kind: "find",
+    help: "The vowels are a, e, i, o, u.",
+    gen: () => { const v = shuffle(["a", "e", "i", "o", "u"]).slice(0, 4), cons = sample(LOW.filter(l => !"aeiou".includes(l)), 7); return { ask: ["Tap all the vowels.", LN("a"), LN("e"), LN("i"), LN("o"), LN("u")], target: "a e i o u", row: shuffle([...v.map(h => ({ h, ok: 1, say: [LN(h)] })), ...cons.map(h => ({ h, ok: 0 }))]) }; } },
+  { id: "e-sight", mode: "written", e: "👀", t: "Write sight words", kind: "trace", chars: DATA.sight, say: w => [w],
+    help: "Use the words in her book if the list there is different." },
+  { id: "e-sightq", mode: "written", e: "👂", t: "Listen and find the word", kind: "quiz",
+    gen: () => { const w = pick(DATA.sight); const c = choices(w, DATA.sight); return { big: "👂", ask: ["Tap the word", "_", w], opts: c.opts, ans: c.ans, key: w }; } },
+  { id: "e-c2s", mode: "written", e: "🔡", t: "Small letter for the capital", kind: "quiz",
+    gen: () => { const i = rnd(26); const c = choices(LOW[i], LOW); return { big: UP[i], ask: ["Find the small letter for", LN(UP[i])], after: ["small", LN(UP[i])], opts: c.opts, ans: c.ans, key: UP[i] }; } },
+  { id: "e-blend", mode: "written", e: "🧩", t: "Blend and write the word", kind: "order",
+    help: "Say each sound slowly, c… a… t, then blend them: cat!",
+    gen: () => { const [w, em] = pick(DATA.blend); return { big: em, ask: [...w.split("").map(PH), "_", w], items: w.split(""), itemSay: l => [PH(l)], done: [w], key: w }; } },
+  { id: "e-order", mode: "written", e: "🔢", t: "Arrange in ABC order", kind: "order",
+    gen: () => { const L = Math.random() < .5 ? UP : LOW; const ix = sample(range(0, 25), 4).sort((a, b) => a - b); return { ask: ["Tap the letters in A B C order."], items: ix.map(i => L[i]), itemSay: l => [LN(l)], key: ix.join() }; } },
+  { id: "e-first", mode: "written", e: "🖼️", t: "First letter of the picture", kind: "quiz",
+    gen: () => { const a = pick(DATA.abc); const c = choices(a[0], UP); return { big: a[2], ask: ["What is the first letter of", a[1], "?"], after: [`${a[0]} for ${a[1]}`], opts: c.opts, ans: c.ans, key: a[0] }; } },
+]},
+
+// ===================== MATHS =====================
+{ id: "maths", name: "Maths", e: "123", c: "var(--c-maths)", acts: [
+  { id: "m-names", mode: "oral", e: "🔢", t: "Number names one to fifteen", kind: "cards",
+    help: "Spell it, then say the number: O, N, E, one.",
+    deck: () => range(1, 15).map(n => ({ face: n, lab: DATA.numNames[n].toUpperCase().split("").join(" "), sub: `${DATA.numNames[n]} · ${n}`, say: [...spell(DATA.numNames[n]), "_", N(n)] })) },
+  { id: "m-namesay", mode: "oral", e: "🗣️", t: "Spell the number name", kind: "sayit",
+    items: () => shuffle(range(1, 15)).map(n => ({ big: n, ask: ["Spell the name of this number."], ans: DATA.numNames[n].toUpperCase().split("").join(" "), ansSay: [...spell(DATA.numNames[n]), "_", N(n)] })) },
+  { id: "m-table", mode: "oral", e: "✖️", t: "Table of 1", kind: "cards",
+    help: "Chant it together: one one za one, one two za two…",
+    deck: () => range(1, 10).map(n => ({ face: `1 × ${n} = ${n}`, faceCls: "txt", say: [`One ${DATA.numNames[n]} za ${DATA.numNames[n]}`] })) },
+  { id: "m-tablesay", mode: "oral", e: "🗣️", t: "Say the table of 1", kind: "sayit",
+    items: () => shuffle(range(1, 10)).map(n => ({ big: `1 × ${n}`, ask: [`One ${DATA.numNames[n]} za?`], ans: `1 × ${n} = ${n}`, ansSay: [`One ${DATA.numNames[n]} za ${DATA.numNames[n]}`] })) },
+  { id: "m-backw", mode: "oral", e: "⏪", t: "Backward numbers 10 to 1", kind: "chant",
+    nums: range(1, 10).reverse(), ask: ["Let's count backward from 10 to 1!"] },
+  { id: "m-two", mode: "oral", e: "✌️", t: "2 form: 2, 4, 6 … 20", kind: "chant",
+    nums: range(1, 10).map(n => n * 2), ask: ["Let's count in twos!"] },
+  { id: "m-ten", mode: "oral", e: "🔟", t: "10 form: 10, 20, 30 … 100", kind: "chant",
+    nums: range(1, 10).map(n => n * 10), ask: ["Let's count in tens!"] },
+  { id: "m-asc", mode: "oral", e: "📈", t: "Ascending order", kind: "order",
+    help: "Ascending means small to big. She says each number as she taps it.",
+    gen: () => { const items = sample(range(1, 50), 4).sort((a, b) => a - b); return { ask: ["Tap the numbers from small to big."], items, itemSay: n => [N(n)], key: items.join() }; } },
+
+  { id: "m-trace", mode: "written", e: "✍️", t: "Write numbers 1 to 100", kind: "trace", chars: range(1, 100).map(String), say: n => [n] },
+  { id: "m-chart", mode: "written", e: "💯", t: "Find the number (1 to 100)", kind: "chart" },
+  { id: "m-after", mode: "written", e: "➡️", t: "What comes after?", kind: "quiz",
+    gen: () => { const n = rnd(98) + 1; const c = choices(n + 1, near(n + 1)); return { big: BOXES([n, n + 1], 1), bigCls: "txt", fill: n + 1, ask: ["What comes after", N(n), "?"], after: [N(n), "_", N(n + 1)], opts: c.opts, ans: c.ans, key: n }; } },
+  { id: "m-before", mode: "written", e: "⬅️", t: "What comes before?", kind: "quiz",
+    gen: () => { const n = rnd(98) + 2; const c = choices(n - 1, near(n - 1)); return { big: BOXES([n - 1, n], 0), bigCls: "txt", fill: n - 1, ask: ["What comes before", N(n), "?"], after: [N(n - 1), "_", N(n)], opts: c.opts, ans: c.ans, key: n }; } },
+  { id: "m-between", mode: "written", e: "↔️", t: "What comes between?", kind: "quiz",
+    gen: () => { const n = rnd(97) + 2; const c = choices(n, near(n)); return { big: BOXES([n - 1, n, n + 1], 1), bigCls: "txt", fill: n, ask: ["What comes between", N(n - 1), "and", N(n + 1), "?"], after: [N(n - 1), "_", N(n), "_", N(n + 1)], opts: c.opts, ans: c.ans, key: n }; } },
+  { id: "m-backq", mode: "written", e: "⏪", t: "Write backward numbers 10 to 1", kind: "quiz",
+    gen: () => { const s0 = rnd(7) + 4; const seq = [s0, s0 - 1, s0 - 2, s0 - 3]; const h = rnd(3) + 1; const c = choices(seq[h], near(seq[h]).filter(x => x <= 10)); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Count backward. Which number is missing?"], after: seq.map(N), opts: c.opts, ans: c.ans, key: s0 + "-" + h }; } },
+  { id: "m-twoq", mode: "written", e: "✌️", t: "Write the 2 form", kind: "quiz",
+    help: "2 form: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20.",
+    gen: () => { const st = rnd(6) + 1; const seq = [0, 1, 2, 3].map(k => (st + k) * 2); const h = rnd(3) + 1; const c = choices(seq[h], near(seq[h], 2)); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Count in twos. Which number is missing?"], after: seq.map(N), opts: c.opts, ans: c.ans, key: st + "-" + h }; } },
+  { id: "m-tenq", mode: "written", e: "🔟", t: "Write the 10 form", kind: "quiz",
+    help: "10 form: 10, 20, 30, 40, 50, 60, 70, 80, 90, 100.",
+    gen: () => { const st = rnd(6) + 1; const seq = [0, 1, 2, 3].map(k => (st + k) * 10); const h = rnd(3) + 1; const c = choices(seq[h], near(seq[h], 10)); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Count in tens. Which number is missing?"], after: seq.map(N), opts: c.opts, ans: c.ans, key: st + "-" + h }; } },
+  { id: "m-count", mode: "written", e: "🍓", t: "Count and write", kind: "quiz",
+    gen: () => { const n = rnd(15) + 1, em = pick(DATA.countEmoji); const c = choices(n, range(1, 15)); return { big: `<span class="countbox">${em.repeat(n)}</span>`, ask: ["Count them. How many are there?"], after: [N(n)], opts: c.opts, ans: c.ans, key: n }; } },
+  { id: "m-circle", mode: "written", e: "⭕", t: "Circle the number for the name", kind: "quiz",
+    gen: () => { const n = rnd(15) + 1; const c = choices(n, range(1, 15)); return { big: DATA.numNames[n], bigCls: "txt", ask: ["Tap the number", N(n)], after: [...spell(DATA.numNames[n]), "_", N(n)], opts: c.opts, ans: c.ans, key: n }; } },
+  { id: "m-cmp", mode: "written", e: "🐊", t: "Greater, lesser or equal", kind: "quiz",
+    help: "> greater than, < lesser than, = equal to. The crocodile mouth always eats the bigger number!",
+    gen: () => { const a = rnd(20) + 1, b = Math.random() < .2 ? a : rnd(20) + 1; const ans = a > b ? 0 : a < b ? 1 : 2;
+      return { big: `${a} ◯ ${b}`, ask: ["Is", N(a), "greater than, less than, or equal to", N(b), "?"], after: [N(a), ["is greater than", "is less than", "is equal to"][ans], N(b)], opts: [">", "<", "="], ans, key: `${a}-${b}` }; } },
+]},
+
+// ===================== KANNADA =====================
+{ id: "kannada", name: "Kannada", native: "ಕನ್ನಡ", e: "ಕ", c: "var(--c-kannada)", acts: [
+  { id: "k-varna", mode: "oral", e: "ಅ", t: "Alphabet ಅ to ಳ", n: "ಕನ್ನಡ ವರ್ಣಮಾಲೆ ‘ಅ ಯಿಂದ ಳ’ ವರೆಗೆ", kind: "cards",
+    help: "Listen, then she repeats. Capital letters like T, D, N and L in the spelling mean the tongue curls back (a hard sound).",
+    deck: () => KN_ALL.map(([ch, tr, hint]) => ({ face: ch, faceCls: "kn", lab: tr, tr: hint, say: [KN(ch)] })) },
+  { id: "k-fruits", mode: "oral", e: "🍎", t: "Fruit names", n: "ಹಣ್ಣುಗಳ ಹೆಸರುಗಳು", kind: "cards",
+    help: "ಹಣ್ಣು (han-nu) means fruit.",
+    deck: () => DATA.knFruits.map(([kn, tr, en, em]) => ({ face: em, lab: `<span class="kn">${kn}</span>`, sub: en, tr: `Say: ${tr}`, say: [KN(kn)] })) },
+  { id: "k-veg", mode: "oral", e: "🥕", t: "Vegetable names", n: "ತರಕಾರಿಗಳ ಹೆಸರುಗಳು", kind: "cards",
+    help: "ಕಾಯಿ (kaa-yi) comes at the end of many vegetable names.",
+    deck: () => DATA.knVeg.map(([kn, tr, en, em]) => ({ face: em, lab: `<span class="kn">${kn}</span>`, sub: en, tr: `Say: ${tr}`, say: [KN(kn)] })) },
+  { id: "k-namesay", mode: "oral", e: "🗣️", t: "Say it in Kannada", kind: "sayit",
+    items: () => sample([...DATA.knFruits, ...DATA.knVeg], 10).map(([kn, tr, en, em]) => ({ big: em, ask: ["What is this called in Kannada?"], ans: `<span class="kn">${kn}</span>${small("Say: " + tr)}`, ansSay: [KN(kn)] })) },
+  { id: "k-rh-kaage", mode: "oral", e: "🐦‍⬛", t: "Rhyme: Ondu Kaage Banditu", n: "ಒಂದು ಕಾಗೆ ಬಂದಿತು", kind: "rhyme", r: () => DATA.knRhymes[0], lang: "kn" },
+  { id: "k-rh-naayi", mode: "oral", e: "🐶", t: "Rhyme: Naayimari Naayimari", n: "ನಾಯಿಮರಿ ನಾಯಿಮರಿ", kind: "rhyme", r: () => DATA.knRhymes[1], lang: "kn" },
+
+  { id: "k-trace", mode: "written", e: "✍️", t: "Write ಅ to ಳ", n: "‘ಅ ಯಿಂದ ಳ’ ವರೆಗೆ ಬರೆಯಿರಿ", kind: "trace", chars: KN_LET, font: "kn", say: c => [KN(c)] },
+  { id: "k-match", mode: "written", e: "🔗", t: "Match the letter to the picture", n: "ಹೊಂದಿಸಿ ಬರೆಯಿರಿ", kind: "match",
+    ask: ["Match each letter to its picture."],
+    pairs: () => sample(DATA.knPics, 4).map(([l, w, tr, en, em]) => ({ l: `<span class="kn">${l}</span>`, r: `${em}${small(tr)}`, lSay: [KN(l)], rSay: [KN(w)] })) },
+  { id: "k-blank", mode: "written", e: "⬜", t: "Fill in the missing letter", n: "ಬಿಟ್ಟಸ್ಥಳ ತುಂಬಿರಿ", kind: "quiz",
+    gen: () => { const i = rnd(KN_LET.length - 3); const seq = KN_LET.slice(i, i + 4); const h = rnd(4); const c = choices(seq[h], KN_LET.slice(Math.max(0, i - 3), i + 7));
+      return { big: BOXES(seq, h, "kn"), bigCls: "txt", fill: seq[h], ask: ["Which letter is missing?"], after: [KN(seq[h])], opts: c.opts.map(o => `<span class="kn">${o}</span>${small(knSay(o))}`), ans: c.ans, key: i + "-" + h }; } },
+  { id: "k-first", mode: "written", e: "🖼️", t: "First letter of the picture", n: "ಚಿತ್ರ ನೋಡಿ ಮೊದಲ ಅಕ್ಷರ ಬರೆಯಿರಿ", kind: "quiz",
+    gen: () => { const p = pick(DATA.knPics); const c = choices(p[0], DATA.knPics.map(x => x[0]));
+      return { big: p[4], sub: `${p[1]} · ${p[2]} · ${p[3]}`, ask: [KN(p[1]), "_", "What is the first letter?"], after: [KN(p[0])], opts: c.opts.map(o => `<span class="kn">${o}</span>${small(knSay(o))}`), ans: c.ans, key: p[0] }; } },
+  { id: "k-odd", mode: "written", e: "🧐", t: "Pick the odd letter out", n: "ಗುಂಪಿಗೆ ಸೇರದ ಅಕ್ಷರ ಆರಿಸಿ", kind: "quiz",
+    gen: () => { const [a, b] = sample(KN_LET.slice(0, 40), 2); const opts = shuffle([a, a, a, b]); return { big: "🧐", ask: ["Three are the same. Which letter is different?"], after: [KN(b)], opts: opts.map(o => `<span class="kn">${o}</span>`), ans: opts.indexOf(b), key: a + b }; } },
+  { id: "k-circle", mode: "written", e: "⭕", t: "Circle the same letters", n: "ಕೆಳಭಾಗದ ಅಕ್ಷರ ನೋಡಿ, ಅದೇ ಅಕ್ಷರಗಳಿಗೆ ವೃತ್ತ ಹಾಕಿ", kind: "find",
+    gen: () => { const t = pick(KN_LET.slice(0, 40)); const others = sample(KN_LET.filter(x => x !== t), 7);
+      return { ask: ["Find all the letters like this one.", KN(t)], target: `<span class="kn">${t}</span>`, sub: knSay(t), row: shuffle([...Array(3).fill(0).map(() => ({ h: `<span class="kn">${t}</span>`, ok: 1, say: [KN(t)] })), ...others.map(o => ({ h: `<span class="kn">${o}</span>`, ok: 0 }))]) }; } },
+]},
+
+// ===================== RHYMES =====================
+{ id: "rhymes", name: "English Rhymes", e: "🎤", c: "var(--c-rhymes)",
+  acts: DATA.rhymes.map((r, i) => ({ id: "r-" + r.id, mode: "oral", e: r.e, t: `${i + 1}. ${r.title}`, kind: "rhyme", r: () => r, lang: "en" })) },
+
+// ===================== HINDI =====================
+{ id: "hindi", name: "Hindi", native: "हिन्दी", e: "अ", c: "var(--c-hindi)", acts: [
+  { id: "h-varna", mode: "oral", e: "अ", t: "Letters अ to ऋ", n: "अ से ऋ तक हिन्दी वर्णमाला", kind: "cards",
+    deck: () => DATA.hiVowels.map(([l, tr, w, en, em]) => ({ face: l, pic: em, lab: w, sub: `${tr} · ${en}`, say: [HI(l), "_", HI(`${l} से ${w}`)] })) },
+  { id: "h-veg", mode: "oral", e: "🥕", t: "Vegetable names", n: "सब्जियों का नाम", kind: "cards",
+    deck: () => DATA.hiVeg.map(([hi, tr, en, em]) => ({ face: em, lab: hi, sub: `${tr} · ${en}`, say: [HI(hi)] })) },
+  { id: "h-fruit", mode: "oral", e: "🍌", t: "Fruit names", n: "फलों का नाम", kind: "cards",
+    deck: () => DATA.hiFruits.map(([hi, tr, en, em]) => ({ face: em, lab: hi, sub: `${tr} · ${en}`, say: [HI(hi)] })) },
+  { id: "h-namesay", mode: "oral", e: "🗣️", t: "Say it in Hindi", kind: "sayit",
+    items: () => sample([...DATA.hiFruits, ...DATA.hiVeg], 10).map(([hi, tr, en, em]) => ({ big: em, ask: [HI("यह क्या है?")], ans: `${hi}${small(tr)}`, ansSay: [HI(hi)] })) },
+  { id: "h-rh-titli", mode: "oral", e: "🦋", t: "Rhyme: Titli", n: "तितली", kind: "rhyme", r: () => DATA.hiRhymes[0], lang: "hi" },
+  { id: "h-rh-chidiya", mode: "oral", e: "🐦", t: "Rhyme: Chidiya", n: "चिड़िया", kind: "rhyme", r: () => DATA.hiRhymes[1], lang: "hi" },
+
+  { id: "h-trace", mode: "written", e: "✍️", t: "Write अ to ऋ", n: "अ से ऋ तक लिखो", kind: "trace", chars: HI_LET, say: c => [HI(c)] },
+  { id: "h-match", mode: "written", e: "🔗", t: "Match the letter to the picture", n: "मिलान कीजिए", kind: "match",
+    ask: ["Match each letter to its picture."],
+    pairs: () => sample(DATA.hiVowels, 4).map(([l, tr, w, en, em]) => ({ l, r: `${em}${small(w)}`, lSay: [HI(l)], rSay: [HI(w)] })) },
+  { id: "h-blank", mode: "written", e: "⬜", t: "Write the missing letter", n: "छूटे हुए अक्षरों को लिखिए", kind: "quiz",
+    gen: () => { const i = rnd(4); const seq = HI_LET.slice(i, i + 4); const h = rnd(4); const c = choices(seq[h], HI_LET); return { big: BOXES(seq, h), bigCls: "txt", fill: seq[h], ask: ["Which letter is missing?"], after: [HI(seq[h])], opts: c.opts, ans: c.ans, key: i + "-" + h }; } },
+  { id: "h-first", mode: "written", e: "🖼️", t: "First letter of the picture", n: "चित्र के पहले अक्षर को लिखिए", kind: "quiz",
+    gen: () => { const p = pick(DATA.hiVowels); const c = choices(p[0], HI_LET); return { big: p[4], sub: `${p[2]} · ${p[3]}`, ask: [HI(p[2]), "_", "What is the first letter?"], after: [HI(`${p[0]} से ${p[2]}`)], opts: c.opts, ans: c.ans, key: p[0] }; } },
+  { id: "h-odd", mode: "written", e: "🧐", t: "Circle the different letter", n: "अलग अक्षर पर गोला लगाइए", kind: "quiz",
+    gen: () => { const [a, b] = sample(HI_LET, 2); const opts = shuffle([a, a, a, b]); return { big: "🧐", ask: ["Three are the same. Which letter is different?"], after: [HI(b)], opts, ans: opts.indexOf(b), key: a + b }; } },
+  { id: "h-circle", mode: "written", e: "⭕", t: "Circle the same letters", n: "ऊपर की पंक्ति में अक्षरों पर गोला लगाइए", kind: "find",
+    gen: () => { const t = pick(HI_LET); const others = Array(7).fill(0).map(() => pick(HI_LET.filter(x => x !== t))); return { ask: ["Find all the letters like this one.", HI(t)], target: t, sub: hiSay(t), row: shuffle([...Array(3).fill(0).map(() => ({ h: t, ok: 1, say: [HI(t)] })), ...others.map(h => ({ h, ok: 0 }))]) }; } },
+]},
+
+// ===================== GK =====================
+{ id: "gk", name: "G.K.", e: "🌏", c: "var(--c-gk)", acts: [
+  { id: "g-qa", mode: "oral", e: "💬", t: "All 10 GK questions", kind: "sayit",
+    help: "The voice asks. She answers out loud, then tap 'Hear the answer'. Type the founder's name in ⚙️ Settings.",
+    items: () => DATA.gk.map(x => ({ reveal: x.e, ask: [x.q], ans: x.a, ansSay: [x.a], editable: x.editable })) },
+  { id: "g-sym", mode: "oral", e: "🇮🇳", t: "National symbols", kind: "sayit",
+    items: () => shuffle(DATA.symbols).map(([k, v, em]) => ({ reveal: em, ask: [`Which is our national ${k}?`], ans: v, ansSay: [v] })) },
+  { id: "g-days", mode: "oral", e: "📅", t: "Days of the week", kind: "cards",
+    help: "Seven days in a week. Say them in order together.",
+    deck: () => DATA.days.map((d, i) => ({ face: i + 1, lab: d, say: [d] })) },
+]},
+
+// ===================== STORY =====================
+{ id: "story", name: "Story", e: "📖", c: "var(--c-story)", acts: [
+  { id: "s-hare", mode: "oral", e: "🐢", t: "The Hare and the Tortoise", kind: "story", s: () => DATA.stories[0] },
+  { id: "s-hare-o", mode: "oral", e: "🧩", t: "Hare and Tortoise: what happened first?", kind: "order",
+    gen: () => { const st = DATA.stories[0].steps; return { ask: ["What happened first? Tap the pictures in order."], items: st.map(x => x.split(" ")[0]), itemSay: e => [st.find(x => x.startsWith(e)).slice(e.length + 1)], cap: st.map(x => x.slice(x.indexOf(" ") + 1)), key: "h" }; } },
+  { id: "s-fox", mode: "oral", e: "🦊", t: "The Fox and the Grapes", kind: "story", s: () => DATA.stories[1] },
+  { id: "s-fox-o", mode: "oral", e: "🧩", t: "Fox and Grapes: what happened first?", kind: "order",
+    gen: () => { const st = DATA.stories[1].steps; return { ask: ["What happened first? Tap the pictures in order."], items: st.map(x => x.split(" ")[0]), itemSay: e => [st.find(x => x.startsWith(e)).slice(e.length + 1)], cap: st.map(x => x.slice(x.indexOf(" ") + 1)), key: "f" }; } },
+]},
+
+// ===================== EVS =====================
+{ id: "evs", name: "EVS", e: "🌱", c: "var(--c-evs)", acts: [
+  { id: "v-manners", mode: "oral", e: "🙏", t: "Good manners", kind: "cards",
+    deck: () => DATA.manners.map(([em, t, s]) => ({ face: em, lab: t, sub: s, say: [s] })) },
+  { id: "v-safety", mode: "oral", e: "🏫", t: "Good manners in school: safety rules", kind: "cards",
+    help: "From her EVS book. ✅ means do it, ❌ means don't do it.",
+    deck: () => DATA.safety.map(([em, rule, , ok, em2]) => ({ face: em + (em2 || ""), lab: ok ? "✅" : "❌", sub: rule, say: [rule] })) },
+  { id: "v-safetyq", mode: "oral", e: "👍", t: "Good or not good?", kind: "quiz",
+    gen: () => { const r = pick(DATA.safety); return { big: r[0] + (r[4] || ""), ask: [`${r[2]}. Is it good or not good?`], after: [r[1]], opts: ["👍", "👎"], ans: r[3] ? 0 : 1, key: r[2], wide: true }; } },
+  { id: "v-golden", mode: "oral", e: "✨", t: "Golden words", kind: "cards",
+    help: "Thank you, Sorry, Please, Excuse me and May I are golden words. Using them shows good manners.",
+    deck: () => DATA.golden.map(([em, t, s]) => ({ face: em, lab: t, sub: s, say: [t, "_", s.replace(/["“”]/g, "")] })) },
+  { id: "v-houses", mode: "oral", e: "🏠", t: "Types of houses", kind: "cards",
+    deck: () => DATA.houses.map(([em, t, s]) => ({ face: em, lab: t, sub: s, say: [t.replace(" / ", " or "), "_", s] })) },
+  { id: "v-housesay", mode: "oral", e: "🗣️", t: "Name the house", kind: "sayit",
+    items: () => shuffle(DATA.houses).map(([em, t]) => ({ big: em, ask: ["What type of house is this?"], ans: t, ansSay: [t.replace(" / ", " or ")] })) },
+  { id: "v-rooms", mode: "oral", e: "🛏️", t: "Rooms in a house", kind: "cards",
+    deck: () => DATA.rooms.map(([em, t, s]) => ({ face: em, lab: t, sub: s, say: [t, "_", s] })) },
+  { id: "v-roomsq", mode: "oral", e: "🏠", t: "Which room?", kind: "quiz",
+    gen: () => { const [q, room] = pick(DATA.roomQs); const opts = shuffle(DATA.rooms); return { big: "🏠", ask: [q], after: [`In the ${room.toLowerCase()}.`], opts: opts.map(o => `${o[0]}${small(o[1])}`), ans: opts.findIndex(o => o[1] === room), key: q }; } },
+  { id: "v-school", mode: "oral", e: "🏫", t: "My School", kind: "sayit",
+    help: "Type her teacher's name in ⚙️ Settings.",
+    items: () => DATA.myschool.map(x => ({ big: x.e, ask: [x.q], ans: x.a, ansSay: [x.a], editable: x.editable })) },
+
+  { id: "v-body", mode: "written", e: "🧍", t: "Match the parts of the body", kind: "quiz",
+    help: "Her book also has: shoulder, elbow, wrist, thumb, finger, thigh, knee, heel, foot, toe. Point to each one on her body.",
+    gen: () => { const b = pick(DATA.body); const c = choices(b, DATA.body, 4, x => x[0]); return { big: "🧍", ask: [`Tap the ${b[0].toLowerCase()}.`], after: [`${b[0]}. I ${b[2]} with my ${b[0].toLowerCase()}.`], opts: c.opts.map(o => `${o[1]}${small(o[0])}`), ans: c.ans, key: b[0] }; } },
+  { id: "v-family", mode: "written", e: "👨‍👩‍👧", t: "Small family and joint family", kind: "quiz",
+    help: "Small family: father, mother, brother, sister. Joint family: grandparents, uncle, aunt and cousins live together too.",
+    gen: () => { const j = Math.random() < .5; const sm = DATA.family.small.map(x => famEmoji[x]).join(""), jt = DATA.family.joint.map(x => famEmoji[x]).join(""); const opts = shuffle([sm, jt]);
+      return { big: "🏠", ask: [j ? "Tap the joint family." : "Tap the small family."], after: [j ? "Yes! A joint family has grandparents, uncle, aunt and cousins too." : "Yes! A small family has father, mother, brother and sister."], opts: opts.map(o => `<span class="fam">${o}</span>`), ans: opts.indexOf(j ? jt : sm), key: String(j) + rnd(99), wide: true }; } },
+  { id: "v-plant", mode: "written", e: "🌿", t: "First letter of the plant parts", kind: "quiz",
+    help: "The parts are roots, stem, leaf, flower and fruit.",
+    gen: () => { const [p, l] = pick(DATA.plant); const c = choices(l, ["R", "S", "L", "F", "T", "P", "M"]); return { big: plantSVG(p), sub: p, ask: [`This is the ${p.toLowerCase()}. What is its first letter?`], after: [`${l} for ${p.toLowerCase()}`], opts: c.opts, ans: c.ans, key: p }; } },
+  { id: "v-health", mode: "written", e: "🥦", t: "Circle the odd one out: healthy or unhealthy", kind: "quiz",
+    help: "Healthy: vegetables, milk, nuts, cheese, pulses, fruits. Unhealthy: burger, chocolate, toffees, French fries, soda, cake.",
+    gen: () => { const odd = Math.random() < .5; const [main, other] = odd ? [DATA.healthy, DATA.unhealthy] : [DATA.unhealthy, DATA.healthy]; const o = pick(other); const opts = shuffle([...sample(main, 3), o]);
+      return { big: "🤔", ask: ["Circle the odd one out."], after: [`${o[1]}. ${odd ? "It is unhealthy food." : "It is healthy food."}`], opts: opts.map(x => `${x[0]}${small(x[1])}`), ans: opts.indexOf(o), key: o[1] }; } },
+]},
+
+// ===================== ACTIVITY =====================
+{ id: "activity", name: "Activity", e: "🌸", c: "var(--c-activity)", acts: [
+  { id: "a-flowers", mode: "oral", e: "🌹", t: "Identify flowers", kind: "sayit",
+    items: () => shuffle(DATA.flowers).map(([em, n]) => ({ big: em, ask: ["What is the name of this flower?"], ans: n, ansSay: [n] })) },
+  { id: "a-fruits", mode: "oral", e: "🍇", t: "Identify fruits", kind: "sayit",
+    items: () => sample(DATA.fruits, 10).map(([em, n]) => ({ big: em, ask: ["What is the name of this fruit?"], ans: n, ansSay: [n] })) },
+  { id: "a-veg", mode: "oral", e: "🥕", t: "Identify vegetables", kind: "sayit",
+    items: () => sample(DATA.veg, 10).map(([em, n]) => ({ big: em, ask: ["What is the name of this vegetable?"], ans: n, ansSay: [n] })) },
+]},
+
+// ===================== DRAWING =====================
+{ id: "drawing", name: "Drawing", e: "🖍️", c: "var(--c-drawing)", acts: [
+  { id: "d-draw", mode: "written", e: "🎨", t: "Drawing and colouring", kind: "draw" },
+]},
+];
+
+</script>
+<script>
+// ================= state =================
+const KEY = "krishvi-star-garden-v1";
+const DEFAULT = { stars: 0, done: {}, known: {}, rated: {}, words: {}, stickers: [], founder: "", teacher: "", help: true, mission: null };
+let S;
+try { S = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch { S = { ...DEFAULT }; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ALL_ACTS = SUBJECTS.flatMap(s => s.acts.map(a => ({ ...a, subj: s })));
+const findAct = id => ALL_ACTS.find(a => a.id === id);
+const subjOf = id => SUBJECTS.find(s => s.id === id);
+const LEVELS = [[0, "Little Seed", "🌱"], [25, "Sprout", "🌿"], [75, "Bud", "🌷"], [150, "Blossom", "🌸"], [300, "Rainbow Garden", "🌈"], [500, "Star Princess", "👑"]];
+const L = DATA.lines;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+document.body.classList.toggle("nohelp", !S.help);
+
+// ================= voice =================
+// Every fixed sentence is a pre-recorded clip listed in audio/manifest.js.
+// Anything not recorded (typed rhyme words, names) is read by the same voices live.
+const CLIPS = window.AUDIO || {};
+const VOICE = { en: "Samantha", hi: "Lekha", kn: "Soumya" };
+let token = 0, curAudio = null, curDone = null;
+function stopVoice() {
+  token++;
+  if (curAudio) { curAudio.pause(); curAudio = null; }
+  if (curDone) { curDone(); curDone = null; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
+function playFile(f) {
+  return new Promise(res => {
+    const a = new Audio("audio/" + f); curAudio = a; curDone = res;
+    a.onended = a.onerror = () => { curDone = null; res(); };
+    a.play().catch(() => { curDone = null; res(); });
+  });
+}
+function liveSay(text, lang) {
+  return new Promise(res => {
+    if (!("speechSynthesis" in window)) return res();
+    const vs = speechSynthesis.getVoices();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = vs.find(x => x.name.startsWith(VOICE[lang])) || vs.find(x => x.lang.replace("_", "-").startsWith(lang));
+    if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = .9; curDone = res;
+    const t = setTimeout(res, 4000 + text.length * 120);
+    u.onend = u.onerror = () => { clearTimeout(t); curDone = null; res(); };
+    setTimeout(() => speechSynthesis.speak(u), 60);
+  });
+}
+function segToLive(seg) {
+  const [p, rest] = seg.includes("|") ? [seg.slice(0, seg.indexOf("|")), seg.slice(seg.indexOf("|") + 1)] : ["", seg];
+  if (p === "kn") return [rest, "kn"];
+  if (p === "hi") return [rest, "hi"];
+  if (p === "L") return [DATA.letterNames[rest] || rest, "en"];
+  if (p === "ph") return [DATA.phon[rest] || rest, "en"];
+  return [seg, "en"];
+}
+// say(["What comes after", "L|C"]) plays the clips one after another. A newer call stops an older one.
+async function say(segs) {
+  stopVoice(); const my = token;
+  for (const seg of [].concat(segs || [])) {
+    if (my !== token) return false;
+    if (seg === "?" || seg === "") continue;
+    if (seg === "_") { await sleep(300); continue; }
+    if (seg === "__") { await sleep(1200); continue; }
+    if (CLIPS[seg]) await playFile(CLIPS[seg]);
+    else { const [t, l] = segToLive(seg); await liveSay(t, l); }
+  }
+  return my === token;
+}
+if ("speechSynthesis" in window) speechSynthesis.getVoices();
+
+// Pinky, the cartoon cheerleader who cheers for Krishvi
+const MASCOT = `<svg class="mascot" viewBox="0 0 140 160" aria-label="cheering girl">
+  <g class="arm l"><path d="M52 92 L28 58" stroke="#ffcfa8" stroke-width="9" stroke-linecap="round"/><g fill="#ff3e8a"><circle cx="24" cy="50" r="13"/><circle cx="14" cy="44" r="7"/><circle cx="32" cy="38" r="7"/><circle cx="16" cy="58" r="6"/></g></g>
+  <g class="arm r"><path d="M88 92 L112 58" stroke="#ffcfa8" stroke-width="9" stroke-linecap="round"/><g fill="#ffd23f"><circle cx="116" cy="50" r="13"/><circle cx="126" cy="44" r="7"/><circle cx="108" cy="38" r="7"/><circle cx="124" cy="58" r="6"/></g></g>
+  <path d="M58 136 L56 152 M82 136 L84 152" stroke="#ffcfa8" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="54" cy="154" rx="9" ry="5" fill="#d81b6a"/><ellipse cx="86" cy="154" rx="9" ry="5" fill="#d81b6a"/>
+  <path d="M50 88 Q70 80 90 88 L104 138 Q70 146 36 138 Z" fill="#ff7ab0"/>
+  <path d="M44 120 Q70 128 96 120" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="70" cy="128" r="0"/><text x="70" y="114" text-anchor="middle" font-size="16" fill="#fff" font-weight="800">★</text>
+  <circle cx="34" cy="40" r="0"/>
+  <g class="pig"><circle cx="36" cy="44" r="12" fill="#5a3825"/><circle cx="104" cy="44" r="12" fill="#5a3825"/>
+    <path d="M38 30 l8 -6 l2 10 z M102 30 l-8 -6 l-2 10 z" fill="#ff3e8a"/></g>
+  <circle cx="70" cy="52" r="30" fill="#ffd9b8"/>
+  <path d="M40 50 Q42 18 70 18 Q98 18 100 50 Q92 34 78 32 Q74 40 62 40 Q50 38 46 32 Q40 40 40 50Z" fill="#5a3825"/>
+  <circle cx="98" cy="30" r="8" fill="#ff3e8a"/><circle cx="104" cy="24" r="4" fill="#ff3e8a"/>
+  <ellipse cx="59" cy="54" rx="4.2" ry="5.5" fill="#3a2418"/><ellipse cx="81" cy="54" rx="4.2" ry="5.5" fill="#3a2418"/>
+  <circle cx="60.5" cy="52" r="1.6" fill="#fff"/><circle cx="82.5" cy="52" r="1.6" fill="#fff"/>
+  <circle cx="51" cy="64" r="5" fill="#ff9fc3" opacity=".8"/><circle cx="89" cy="64" r="5" fill="#ff9fc3" opacity=".8"/>
+  <path d="M60 66 Q70 78 80 66 Z" fill="#c2185b"/><path d="M64 70 Q70 74 76 70" stroke="#ff9fc3" stroke-width="2" fill="none"/>
+</svg>`;
+
+// ================= sounds, fx, praise =================
+let actx;
+function tone(notes, type = "sine", dur = .14) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    notes.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * dur;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(.12, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + dur * 1.6);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur * 1.8);
+    });
+  } catch {}
+}
+const sGood = () => tone([660, 880, 1175], "triangle", .08);
+const sBad = () => tone([300, 220], "sine", .14);
+const sWin = () => tone([523, 659, 784, 1047, 784, 1047], "triangle", .11);
+
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+let bubbleT;
+function bubble(text, emoji = "🌟") {
+  document.querySelector(".cheer")?.remove(); clearTimeout(bubbleT);
+  const b = document.createElement("div"); b.className = "cheer";
+  b.innerHTML = `${MASCOT}<span>${esc(text)}</span><b>${emoji}</b>`;
+  document.body.appendChild(b); bubbleT = setTimeout(() => b.remove(), 2400);
+}
+// praise out loud + on screen; returns when the voice is done
+function praise(list = L.praise, before = []) {
+  const line = pick(list); bubble(line, pick(["🌟", "💖", "🎉", "👏", "🌸", "✨"]));
+  return say([...before, "_", line]);
+}
+
+const fx = document.getElementById("fx"), fctx = fx.getContext("2d");
+let parts = [];
+function confetti(n = 60) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  fx.width = innerWidth; fx.height = innerHeight;
+  const em = ["💖", "⭐", "🌸", "✨", "🎀", "💗"];
+  const start = !parts.length;
+  for (let i = 0; i < n; i++) parts.push({ x: innerWidth / 2 + (Math.random() - .5) * 200, y: innerHeight * .45, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, e: pick(em), s: 18 + rnd(18), life: 90 });
+  if (start) requestAnimationFrame(step);
+}
+function step() {
+  fctx.clearRect(0, 0, fx.width, fx.height);
+  parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .45; p.life--; fctx.font = p.s + "px serif"; fctx.fillText(p.e, p.x, p.y); });
+  parts = parts.filter(p => p.life > 0 && p.y < fx.height + 40);
+  if (parts.length) requestAnimationFrame(step); else fctx.clearRect(0, 0, fx.width, fx.height);
+}
+
+function addStars(n) {
+  if (n <= 0) return;
+  const before = level().name;
+  S.stars += n; save();
+  const el = document.querySelector(".chip.star .n");
+  if (el) { el.textContent = S.stars; const c = el.parentElement; c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
+  if (level().name !== before) setTimeout(() => { sWin(); confetti(90); bubble(`${level().icon} ${level().name}!`, "🎉"); say([L.level]); }, 2600);
+}
+function level() {
+  let Lv = LEVELS[0], next = null;
+  for (let i = 0; i < LEVELS.length; i++) if (S.stars >= LEVELS[i][0]) { Lv = LEVELS[i]; next = LEVELS[i + 1] || null; }
+  return { name: Lv[1], icon: Lv[2], from: Lv[0], next };
+}
+
+// ================= dates & mission =================
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const dayDiff = ds => Math.round((new Date(ds + "T00:00:00") - new Date(todayStr() + "T00:00:00")) / 864e5);
+const nextExam = () => DATA.exams.find(e => dayDiff(e.date) >= 0);
+const fmtDate = ds => new Date(ds + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+function mission() {
+  const t = todayStr();
+  if (S.mission && S.mission.date === t && S.mission.ids.every(findAct)) return S.mission;
+  const ne = nextExam() || DATA.exams[0];
+  const pool = [...ne.subjects.flatMap(id => subjOf(id).acts), ...ALL_ACTS].filter((a, i, arr) => arr.findIndex(b => b.id === a.id) === i);
+  const fresh = pool.filter(a => !S.done[a.id]);
+  S.mission = { date: t, ids: sample((fresh.length >= 3 ? fresh : pool).slice(0, 12), 3).map(a => a.id), bonus: false, finished: {} }; save();
+  return S.mission;
+}
+function missionCheck() {
+  const m = S.mission; if (!m || m.bonus || !m.ids.every(id => m.finished[id])) return false;
+  m.bonus = true; S.stars += 5; save(); return true;
+}
+
+// ================= shell =================
+function topBar() {
+  const Lv = level();
+  return `<div class="top">
+    <img class="avatar" src="img/krishvi.jpg" alt="Krishvi" onerror="this.outerHTML='<span class=&quot;avatar mascotav&quot;>'+MASCOT+'</span>'">
+    <div class="hello"><b>Hi Krishvi!</b><span>${Lv.icon} ${Lv.name}</span></div>
+    <span class="chip star" title="Stars">⭐ <span class="n">${S.stars}</span></span>
+    <button class="iconbtn" id="bStick" title="Sticker book" aria-label="Sticker book">🎀</button>
+    <button class="iconbtn ${S.help ? "on" : ""}" id="bHelp" title="Grown-up help" aria-label="Grown-up help on or off">🧑‍🏫</button>
+    <button class="iconbtn" id="bSet" title="Settings" aria-label="Settings">⚙️</button>
+  </div>`;
+}
+function wireTop() {
+  document.getElementById("bStick").onclick = stickerBook;
+  document.getElementById("bSet").onclick = settings;
+  document.getElementById("bHelp").onclick = e => {
+    S.help = !S.help; save(); document.body.classList.toggle("nohelp", !S.help);
+    e.currentTarget.classList.toggle("on", S.help); toast(S.help ? "Grown-up help is on" : "Grown-up help is off");
+  };
+}
+const subjProgress = s => [s.acts.filter(a => S.done[a.id]).length, s.acts.length];
+
+// ================= welcome =================
+function splash() {
+  const h = new Date().getHours(), g = L.greet[h < 12 ? 0 : h < 17 ? 1 : 2];
+  app.innerHTML = `<div class="splash">
+    <div class="winrow"><img src="img/krishvi.jpg" alt="Krishvi" onerror="this.remove()"><div class="cheerbig">${MASCOT}</div></div>
+    <h1>${g}</h1>
+    <p>Welcome to your Star Garden 🌸</p>
+    <button class="btn main big" id="go">Let's play! ▶</button>
+  </div>`;
+  document.getElementById("go").onclick = () => { home(); confetti(50); bubble(g, "👋"); say([g, L.welcome]); };
+}
+
+// ================= home =================
+function home() {
+  stopVoice();
+  const ne = nextExam(), Lv = level(), m = mission();
+  const dleft = ne ? dayDiff(ne.date) : -1;
+  const big = !ne ? "🎉" : dleft === 0 ? "Today!" : dleft;
+  const names = ne ? ne.subjects.map(id => subjOf(id).name).join(" + ") : "";
+  const lbl = !ne ? "Exams are over. Well done, Krishvi!" : dleft === 0 ? `${names} exam today. You can do it!` : `${dleft === 1 ? "day" : "days"} to ${names}`;
+  const pct = Lv.next ? Math.min(100, (S.stars - Lv.from) / (Lv.next[0] - Lv.from) * 100) : 100;
+  app.innerHTML = topBar() + `
+  <div class="hero">
+    <div class="count">
+      <div class="big">${big}</div><div class="lbl">${lbl}</div>
+      <small>1st Term Exams · 9:00 am to 1:00 pm</small>
+      <div class="tickets">${DATA.exams.map(e => `<div class="ticket ${dayDiff(e.date) < 0 ? "past" : ""} ${ne && e.date === ne.date ? "next" : ""}"><b>${fmtDate(e.date)}</b>${e.subjects.map(id => subjOf(id).name).join(", ")}</div>`).join("")}</div>
+    </div>
+    <div class="mission">
+      <h2>Today's mission</h2>
+      <p>Finish all 3 for 5 bonus stars.</p>
+      <div class="mlist">${m.ids.map(id => { const a = findAct(id); return `<button class="mbtn ${m.finished[id] ? "done" : ""}" data-act="${id}"><span style="font-size:1.5rem">${a.e}</span><span>${a.t}<br><small style="color:var(--berry-soft)">${a.subj.name}</small></span><span class="tick">${m.finished[id] ? "✅" : "▶️"}</span></button>`; }).join("")}</div>
+      <button class="mbtn rwlink" id="bRW"><span style="font-size:1.5rem">📝</span><span>Rhyme words<br><small style="color:var(--berry-soft)">For grown-ups: ${[...DATA.rhymes, ...DATA.knRhymes, ...DATA.hiRhymes].filter(r => (S.words[r.id] || "").trim()).length} of 14 rhymes filled in</small></span><span class="tick">✏️</span></button>
+      <div class="level">${Lv.icon} ${Lv.name}${Lv.next ? ` · ${Lv.next[0] - S.stars} stars to ${Lv.next[2]} ${Lv.next[1]}` : " · top level!"}<div class="bar"><i style="width:${pct}%"></i></div></div>
+    </div>
+  </div>
+  ${DATA.exams.map((e, i) => `<section class="day">
+    <div class="dayhead"><h2>Day ${i + 1} · ${e.day}</h2><span class="when">${fmtDate(e.date)}</span>${ne && e.date === ne.date ? '<span class="tag">Next exam</span>' : ""}</div>
+    <div class="tiles">${e.subjects.map(id => { const s = subjOf(id); const [d, t] = subjProgress(s); return `<button class="tile" style="--c:${s.c}" data-subj="${id}">
+      ${d === t ? '<span class="badge" title="All done">🏅</span>' : ""}
+      <span class="ico ${id === "kannada" ? "kn" : ""}">${s.e}</span>
+      <h3>${s.name}${s.native ? ` <span class="${id === "kannada" ? "kn" : ""}" style="font-size:1rem;color:var(--berry-soft)">${s.native}</span>` : ""}</h3>
+      <span class="prog"><span class="bar"><i style="width:${d / t * 100}%"></i></span>${d}/${t}</span>
+    </button>`; }).join("")}</div>
+  </section>`).join("")}`;
+  wireTop();
+  app.querySelectorAll("[data-subj]").forEach(b => b.onclick = () => subject(b.dataset.subj));
+  app.querySelectorAll("[data-act]").forEach(b => b.onclick = () => run(b.dataset.act));
+  document.getElementById("bRW").onclick = rhymeWords;
+  scrollTo(0, 0);
+}
+
+// ================= rhyme words: fill in every rhyme in one place =================
+function rhymeWords() {
+  stopVoice();
+  const all = [...DATA.rhymes.map(r => ({ ...r, lang: "en", grp: "English rhymes" })),
+               ...DATA.knRhymes.map(r => ({ ...r, lang: "kn", grp: "Kannada rhymes" })),
+               ...DATA.hiRhymes.map(r => ({ ...r, lang: "hi", grp: "Hindi rhymes" }))];
+  const filled = () => all.filter(r => (S.words[r.id] || "").trim()).length;
+  let grp = "";
+  app.innerHTML = topBar() + `
+  <div class="subhead"><button class="back" id="bBack">← Home</button>
+    <div class="subtitle"><span class="ico" style="--c:var(--c-rhymes);background:var(--c-rhymes)">📝</span><div><h1>Rhyme words</h1>
+    <p>Type each rhyme from her book, one line per line. It saves as you type. <b id="rwCount">${filled()} of ${all.length}</b> done.</p></div></div></div>
+  ${all.map((r, k) => { const head = r.grp !== grp ? `<h2 class="rwgrp">${(grp = r.grp)}</h2>` : "";
+    return head + `<div class="rwcard" style="--c:var(--c-rhymes)">
+      <div class="rwhead"><span class="rwe">${r.e}</span><b class="${r.lang === "kn" ? "kn" : ""}">${r.title}</b>${r.en ? `<small>${r.en}</small>` : ""}
+        <span class="rwok" id="ok-${r.id}">${(S.words[r.id] || "").trim() ? "✅ Saved" : ""}</span>
+        <button class="btn small" data-test="${k}">▶ Listen</button></div>
+      <textarea id="tw-${r.id}" data-k="${k}" class="${r.lang === "kn" ? "kn" : ""}" rows="5" placeholder="Type the rhyme here, one line per line…">${esc(S.words[r.id] || "")}</textarea>
+    </div>`; }).join("")}`;
+  wireTop();
+  document.getElementById("bBack").onclick = home;
+  app.querySelectorAll("textarea[data-k]").forEach(t => {
+    let tm;
+    t.oninput = () => { clearTimeout(tm); tm = setTimeout(() => {
+      const r = all[+t.dataset.k]; S.words[r.id] = t.value.trim(); save();
+      document.getElementById("ok-" + r.id).textContent = S.words[r.id] ? "✅ Saved" : "";
+      document.getElementById("rwCount").textContent = `${filled()} of ${all.length}`;
+    }, 400); };
+  });
+  app.querySelectorAll("[data-test]").forEach(x => x.onclick = async () => {
+    const r = all[+x.dataset.test], ls = (S.words[r.id] || document.getElementById("tw-" + r.id).value).split(/\n+/).map(s => s.trim()).filter(Boolean);
+    if (!ls.length) { toast("Type the words first"); return; }
+    stopVoice(); const my = token;
+    for (const l of ls) { if (my !== token) return; const lg = r.lang === "kn" && !/[\u0C80-\u0CFF]/.test(l) ? "en" : r.lang === "hi" && !/[\u0900-\u097F]/.test(l) ? "en" : r.lang; await liveSay(l, lg); }
+  });
+  scrollTo(0, 0);
+}
+
+// ================= subject =================
+function subject(id) {
+  stopVoice();
+  const s = subjOf(id), kn = id === "kannada";
+  const ex = DATA.exams.find(e => e.subjects.includes(id));
+  const actBtn = a => `<button class="act ${S.done[a.id] ? "done" : ""}" style="--c:${s.c}" data-act="${a.id}">
+      <span class="e ${kn ? "kn" : ""}">${a.e}</span><b>${a.t}</b>
+      <span class="meta">${a.n ? `<span class="native ${kn ? "kn" : ""}">${a.n}</span>` : ""}${S.done[a.id] ? "<span>✅ done</span>" : "<span>⭐ to win</span>"}</span>
+    </button>`;
+  const oral = s.acts.filter(a => a.mode === "oral"), written = s.acts.filter(a => a.mode === "written");
+  app.innerHTML = topBar() + `
+  <div class="subhead" style="--c:${s.c}">
+    <button class="back" id="bBack">← Home</button>
+    <div class="subtitle"><span class="ico ${kn ? "kn" : ""}">${s.e}</span><div><h1>${s.name}${s.native ? ` <span class="${kn ? "kn" : ""}" style="font-size:1.2rem;color:var(--berry-soft)">${s.native}</span>` : ""}</h1>
+      <p>Exam on ${ex.day}, ${fmtDate(ex.date)}</p></div></div>
+  </div>
+  ${kn ? `<div class="helpbox p"><b>Help for Mummy/Papa:</b> every Kannada word is spoken by a Kannada voice. Each word also shows how to say it (“Say: …”). Capital letters like <b>T, D, N, L</b> mean a hard sound with the tongue curled back.</div>` : ""}
+  ${id === "rhymes" || id === "kannada" || id === "hindi" ? `<div class="row" style="justify-content:flex-start;margin-top:14px"><button class="btn" id="bRW2">📝 Rhyme words: fill in all rhymes</button></div>` : ""}
+  ${oral.length ? `<div class="section" style="--c:${s.c}"><h2><span class="pill">Oral</span> Listen and say</h2><div class="acts">${oral.map(actBtn).join("")}</div></div>` : ""}
+  ${written.length ? `<div class="section" style="--c:${s.c}"><h2><span class="pill">Written</span> Tap, trace and write</h2><div class="acts">${written.map(actBtn).join("")}</div></div>` : ""}`;
+  wireTop();
+  document.getElementById("bBack").onclick = home;
+  document.getElementById("bRW2")?.addEventListener("click", rhymeWords);
+  app.querySelectorAll("[data-act]").forEach(b => b.onclick = () => run(b.dataset.act));
+  scrollTo(0, 0);
+}
+
+// ================= activity shell =================
+let firstSay = true;
+// first thing said in a game gets a cheerful "Let's go!" in front
+const withStart = segs => { if (!firstSay) return segs; firstSay = false; return [pick(L.start), "_", ...segs]; };
+function run(id) {
+  stopVoice(); firstSay = true;
+  const a = findAct(id), s = a.subj, kn = s.id === "kannada";
+  app.innerHTML = topBar() + `
+  <div class="subhead"><button class="back" id="bBack">← ${s.name}</button></div>
+  <div class="stage" style="--c:${s.c}">
+    <div class="stagehead"><h2>${a.e} ${a.t}${a.n ? `<span class="native ${kn ? "kn" : ""}">${a.n}</span>` : ""}</h2><div class="dots" id="dots"></div></div>
+    ${a.help ? `<div class="parent">${a.help}</div>` : ""}
+    <div id="body"></div>
+  </div>`;
+  wireTop();
+  document.getElementById("bBack").onclick = () => subject(s.id);
+  ({ chant: runChant, cards: runCards, sayit: runSayIt, quiz: runQuiz, match: runMatch, order: runOrder, find: runFind, trace: runTrace, rhyme: runRhyme, story: runStory, draw: runDraw, chart: runChart })[a.kind](a);
+  scrollTo(0, 0);
+}
+const body = () => document.getElementById("body");
+function dots(n, i, ok) { document.getElementById("dots").innerHTML = Array.from({ length: n }, (_, k) => `<i class="${ok[k] ? "ok" : k === i ? "now" : ""}"></i>`).join(""); }
+const replayBtn = `<button class="say big" data-replay aria-label="Hear it again">🔊</button>`;
+
+function finish(a, earned, again) {
+  const first = !S.done[a.id];
+  S.done[a.id] = true;
+  if (S.mission && S.mission.ids.includes(a.id)) S.mission.finished[a.id] = true;
+  let sticker = "";
+  if (first) { sticker = DATA.stickers[ALL_ACTS.findIndex(x => x.id === a.id) % DATA.stickers.length]; if (!S.stickers.includes(sticker)) S.stickers.push(sticker); }
+  const bonus = missionCheck();
+  save(); sWin(); confetti(90);
+  const line = pick(L.finish);
+  body().innerHTML = `<div class="finish">
+    <div class="winrow"><div class="cheerbig">${MASCOT}</div><div class="trophy">${sticker || "🏆"}</div></div>
+    <h2>${line}</h2>
+    <p style="font-size:1.2rem">${earned ? `You won <b>${earned} ⭐</b>` : ""}${sticker ? `<br>New sticker for your sticker book!` : ""}${bonus ? `<br><b>Today's mission done! +5 ⭐</b>` : ""}</p>
+    <div class="row">${again ? `<button class="btn main" id="fAgain">Play again</button>` : ""}<button class="btn" id="fBack">More ${a.subj.name}</button><button class="btn" id="fHome">Home</button></div>
+  </div>`;
+  document.querySelector(".chip.star .n").textContent = S.stars;
+  say([line, ...(sticker ? ["_", L.sticker] : []), ...(bonus ? ["_", L.mission] : [])]);
+  if (again) document.getElementById("fAgain").onclick = () => run(a.id);
+  document.getElementById("fBack").onclick = () => subject(a.subj.id);
+  document.getElementById("fHome").onclick = home;
+}
+
+// ================= count along: numbers light up as the voice counts =================
+function runChant(a) {
+  const nums = a.nums; let busy = false;
+  dots(0, 0, []);
+  body().innerHTML = `<div class="q">
+    <div class="chantrow">${nums.map((n, k) => `<span class="cb" data-c="${k}">${n}</span>`).join("")}</div>
+    <div class="row"><button class="btn main" id="cGo">▶ Count with me</button><button class="btn main alt" id="cHide">🙈 Hide the numbers</button></div>
+    <p class="hint" id="cHint">Listen, then she counts out loud 🗣️</p>
+    <div class="row"><button class="btn main" id="cSaid">⭐ She said it!</button></div></div>`;
+  const b = body(), boxes = [...b.querySelectorAll(".cb")];
+  async function count(first) {
+    if (busy) return; busy = true;
+    boxes.forEach(x => x.classList.remove("lit"));
+    if (!(await say(first ? withStart(a.ask) : a.ask))) { busy = false; return; }
+    const my = token;
+    for (let k = 0; k < nums.length; k++) {
+      if (my !== token) { busy = false; return; }
+      boxes[k].classList.add("lit"); boxes[k].classList.remove("hid");
+      if (CLIPS[N(nums[k])]) await playFile(CLIPS[N(nums[k])]); else await liveSay(N(nums[k]), "en");
+      await sleep(250);
+    }
+    busy = false;
+    if (my === token) { bubble(L.yourTurn, "🎤"); say([L.yourTurn]); }
+  }
+  b.querySelector("#cGo").onclick = () => count(false);
+  b.querySelector("#cHide").onclick = () => { boxes.forEach(x => { x.classList.remove("lit"); x.classList.add("hid"); }); say(["Now you say it!"]); };
+  b.querySelector("#cSaid").onclick = async () => {
+    b.querySelector("#cSaid").disabled = true; sGood(); addStars(3);
+    await praise(L.praise); finish(a, 3, true);
+  };
+  count(true);
+}
+
+// ================= cards: listen and repeat =================
+function runCards(a) {
+  const deck = a.deck();
+  const known = new Set(S.known[a.id] || []);
+  let i = 0, stars = 0;
+  const kn = a.subj.id === "kannada";
+  function draw() {
+    const c = deck[i];
+    dots(0, 0, []);
+    body().innerHTML = `
+      <div class="card">
+        ${c.pic ? `<div class="duo"><div class="face ${c.faceCls || ""}">${c.face}</div><div class="cardpic">${c.pic}</div></div>` : `<div class="face ${c.faceCls || ""}">${c.face}</div>`}
+        ${c.lab ? `<div class="lab">${c.lab}</div>` : ""}
+        ${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
+        ${c.tr ? `<div class="tr p">${c.tr}</div>` : ""}
+        <div class="row"><button class="btn" id="bPrev" ${i === 0 ? "disabled" : ""} aria-label="Previous">◀</button>${replayBtn}<button class="btn" id="bNext" aria-label="Next">▶</button></div>
+        ${c.yt ? `<div class="row"><a class="btn small yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(c.yt)}" target="_blank" rel="noopener">▶ Watch the “${c.face}” song on YouTube</a></div>` : ""}
+        <div class="row"><button class="btn main" id="bKnow">${known.has(i) ? "✅ She said it" : "⭐ She said it!"}</button></div>
+      </div>
+      <div class="strip">${deck.map((d, k) => `<button class="${k === i ? "cur" : ""} ${known.has(k) ? "known" : ""} ${kn ? "kn" : ""}" data-k="${k}">${typeof d.face === "number" || String(d.face).length < 4 ? d.face : k + 1}</button>`).join("")}</div>
+      <p style="text-align:center;color:var(--berry-soft);margin:8px 0 0">${known.size} of ${deck.length} done</p>`;
+    const b = body();
+    b.querySelector("[data-replay]").onclick = () => say(c.say);
+    b.querySelector("#bPrev").onclick = () => { i--; draw(); };
+    b.querySelector("#bNext").onclick = () => { i = (i + 1) % deck.length; draw(); };
+    b.querySelector("#bKnow").onclick = async () => {
+      if (!known.has(i)) { known.add(i); S.known[a.id] = [...known]; addStars(1); stars++; sGood(); save(); }
+      if (known.size === deck.length) { await praise(L.saidIt); return finish(a, stars, false); }
+      const ok = await praise(L.saidIt);
+      if (ok && document.body.contains(b)) { i = (i + 1) % deck.length; while (known.has(i) && known.size < deck.length) i = (i + 1) % deck.length; draw(); }
+    };
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => { i = +x.dataset.k; draw(); });
+    b.querySelector(".strip .cur")?.scrollIntoView({ block: "nearest", inline: "center" });
+    say(withStart(c.say));
+  }
+  draw();
+}
+
+// ================= say it: asked out loud, she answers out loud =================
+const fillName = t => t.replace("{founder}", S.founder || "").replace("{teacher}", S.teacher || "");
+function runSayIt(a) {
+  const items = a.items();
+  let i = 0, stars = 0; const ok = [];
+  function draw() {
+    const it = items[i];
+    const ans = it.editable ? fillName(it.ans) : it.ans;
+    const ansSay = it.editable ? [ans] : it.ansSay;
+    const missing = it.editable && !S[it.editable];
+    dots(items.length, i, ok);
+    body().innerHTML = `<div class="q">
+      <div class="bigview" id="sBig">${it.reveal ? `<button class="mystery" id="bPeek" aria-label="Tap to see the picture"><span>👀</span><b>Tap to see</b></button>` : it.big}</div>
+      ${it.sub ? small(it.sub) : ""}
+      <div class="row">${replayBtn}</div>
+      <p class="hint">She answers out loud 🗣️</p>
+      <div class="ansbox" id="ans" hidden>${ans}</div>
+      ${missing ? `<p class="p">Type the ${it.editable === "founder" ? "founder's" : "teacher's"} name in ⚙️ Settings so this answer shows here.</p>` : ""}
+      <div class="row"><button class="btn" id="bHear">👂 Hear the answer</button><button class="btn main" id="bSaid">⭐ She said it!</button></div>
+      <div class="row"><button class="btn small" id="bSkip">Skip ▶</button></div></div>`;
+    const b = body();
+    b.querySelector("[data-replay]").onclick = () => say(it.ask);
+    const show = () => { b.querySelector("#ans").hidden = false; if (it.reveal && b.querySelector("#bPeek")) { b.querySelector("#sBig").innerHTML = `<span class="popin">${it.reveal}</span>`; } };
+    b.querySelector("#bPeek")?.addEventListener("click", () => { show(); if (!missing) say(ansSay); });
+    b.querySelector("#bHear").onclick = () => { show(); if (!missing) say(ansSay); };
+    const next = () => { i++; i < items.length ? draw() : finish(a, stars, true); };
+    b.querySelector("#bSkip").onclick = next;
+    b.querySelector("#bSaid").onclick = async () => {
+      show(); b.querySelector("#bSaid").disabled = true;
+      sGood(); addStars(1); stars++; ok[i] = 1; dots(items.length, i, ok);
+      const done = await praise(L.praise, missing ? [] : ansSay);
+      if (done && document.body.contains(b)) next();
+    };
+    say(withStart(it.ask));
+  }
+  draw();
+}
+
+// ================= quiz: tap the right one =================
+function runQuiz(a) {
+  const NQ = 8, qs = [], keys = new Set();
+  for (let t = 0; qs.length < NQ && t < 300; t++) { const q = a.gen(); const k = JSON.stringify(q.key); if (!keys.has(k)) { keys.add(k); qs.push(q); } }
+  let i = 0, stars = 0; const ok = [];
+  function draw() {
+    const q = qs[i]; let tries = 0;
+    dots(qs.length, i, ok);
+    body().innerHTML = `<div class="q">
+      <div class="bigview ${q.bigCls || ""}">${q.big}</div>
+      ${q.sub ? small(q.sub) : ""}
+      <div class="row">${replayBtn}</div>
+      <div class="opts ${q.wide ? "wide" : ""}">${q.opts.map((o, k) => `<button class="opt" data-o="${k}">${o}</button>`).join("")}</div></div>`;
+    const b = body();
+    b.querySelector("[data-replay]").onclick = () => say(q.ask);
+    b.querySelectorAll("[data-o]").forEach(btn => btn.onclick = async () => {
+      const k = +btn.dataset.o;
+      if (k === q.ans) {
+        btn.classList.add("right"); sGood();
+        b.querySelectorAll("[data-o]").forEach(x => x.disabled = true);
+        const hole = b.querySelector(".nb.blank");
+        if (hole && q.fill !== undefined) { hole.textContent = q.fill; hole.classList.add("filled"); }
+        if (tries === 0) { stars++; addStars(1); ok[i] = 1; dots(qs.length, i, ok); }
+        const done = await praise(L.praise, q.after || []);
+        if (done && document.body.contains(b)) { i++; i < qs.length ? draw() : finish(a, stars, true); }
+      } else { tries++; btn.classList.add("wrong"); btn.disabled = true; sBad(); say([pick(L.tryAgain)]); }
+    });
+    say(withStart(q.ask));
+  }
+  draw();
+}
+
+// ================= match pairs =================
+function runMatch(a) {
+  const pairs = a.pairs();
+  const right = shuffle(pairs.map((p, k) => k));
+  let sel = null, matched = 0, stars = 0;
+  dots(0, 0, []);
+  body().innerHTML = `<div class="row">${replayBtn}</div>
+    <div class="match"><div class="col">${pairs.map((p, k) => `<button class="mi" data-l="${k}">${p.l}</button>`).join("")}</div>
+    <div class="col">${right.map(k => `<button class="mi" data-r="${k}">${pairs[k].r}</button>`).join("")}</div></div>`;
+  const b = body();
+  const ask = [...a.ask, "_", "Tap a letter, then its picture."];
+  b.querySelector("[data-replay]").onclick = () => say(ask);
+  b.querySelectorAll("[data-l]").forEach(x => x.onclick = () => {
+    if (x.classList.contains("ok")) return;
+    b.querySelectorAll("[data-l]").forEach(y => y.classList.remove("sel"));
+    x.classList.add("sel"); sel = +x.dataset.l; say(pairs[sel].lSay);
+  });
+  b.querySelectorAll("[data-r]").forEach(x => x.onclick = async () => {
+    if (x.classList.contains("ok")) return;
+    if (sel === null) { say(pairs[+x.dataset.r].rSay); return; }
+    if (+x.dataset.r === sel) {
+      x.classList.add("ok"); const l = b.querySelector(`[data-l="${sel}"]`); l.classList.remove("sel"); l.classList.add("ok");
+      sGood(); addStars(1); stars++; matched++; const p = pairs[sel]; sel = null;
+      const all = matched === pairs.length;
+      await praise(L.praise, [...p.lSay, "_", ...p.rSay]);
+      if (all && document.body.contains(b)) finish(a, stars, true);
+    } else { x.classList.remove("wrong"); void x.offsetWidth; x.classList.add("wrong"); sBad(); say([pick(L.tryAgain)]); }
+  });
+  say(withStart(ask));
+}
+
+// ================= put in order =================
+function runOrder(a) {
+  const first = a.gen();
+  const R = first.cap ? 1 : 3;
+  const rounds = [first]; for (let t = 0; rounds.length < R && t < 50; t++) { const r = a.gen(); if (!rounds.some(x => JSON.stringify(x.key) === JSON.stringify(r.key))) rounds.push(r); }
+  let ri = 0, stars = 0; const ok = [];
+  function draw() {
+    const r = rounds[ri]; let next = 0, miss = 0;
+    dots(R > 1 ? R : 0, ri, ok);
+    const pool = shuffle(r.items.map((v, k) => ({ v, k })));
+    body().innerHTML = `<div class="q ${r.cap ? "seq" : ""}">
+      ${r.big ? `<div class="bigview">${r.big}</div>` : ""}
+      <div class="row">${replayBtn}</div>
+      <div class="slots">${r.items.map((_, k) => `<div class="slot" data-s="${k}">${r.cap ? `<span class="sn">${k + 1}</span>` : ""}</div>`).join("")}</div>
+      <div class="pool">${pool.map(p => `<button class="tilebtn" data-k="${p.k}">${p.v}${r.cap ? small(r.cap[p.k]) : ""}</button>`).join("")}</div></div>`;
+    const b = body();
+    b.querySelector("[data-replay]").onclick = () => say(r.ask);
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = async () => {
+      if (String(r.items[+x.dataset.k]) === String(r.items[next])) {
+        const s = b.querySelector(`[data-s="${next}"]`); s.innerHTML = x.innerHTML; s.classList.add("fill");
+        x.classList.add("used"); sGood(); next++;
+        if (next === r.items.length) {
+          const won = miss === 0 ? 2 : 1; stars += won; addStars(won); ok[ri] = 1;
+          const done = await praise(L.praise, r.done || []);
+          if (done && document.body.contains(b)) { ri++; ri < rounds.length ? draw() : finish(a, stars, true); }
+        } else if (r.itemSay) say(r.itemSay(r.items[next - 1]));
+      } else { miss++; x.classList.remove("wrong"); void x.offsetWidth; x.classList.add("wrong"); sBad(); say([pick(L.tryAgain)]); }
+    });
+    say(withStart(r.ask));
+  }
+  draw();
+}
+
+// ================= find all matching =================
+function runFind(a) {
+  const R = 3; let ri = 0, stars = 0; const ok = [];
+  function draw() {
+    const r = a.gen(); let found = 0; const need = r.row.filter(x => x.ok).length;
+    dots(R, ri, ok);
+    body().innerHTML = `<div class="q">
+      <div class="target">${r.target}</div>${r.sub ? small("Say: " + r.sub) : ""}
+      <div class="row">${replayBtn}</div>
+      <div class="findrow">${r.row.map((x, k) => `<button class="fb" data-f="${k}">${x.h}</button>`).join("")}</div></div>`;
+    const b = body();
+    b.querySelector("[data-replay]").onclick = () => say(r.ask);
+    b.querySelectorAll("[data-f]").forEach(x => x.onclick = async () => {
+      const it = r.row[+x.dataset.f];
+      if (x.classList.contains("ok")) return;
+      if (it.ok) {
+        x.classList.add("ok"); sGood(); found++; addStars(1); stars++;
+        if (found === need) { ok[ri] = 1; const done = await praise(); if (done && document.body.contains(b)) { ri++; ri < R ? draw() : finish(a, stars, true); } }
+        else say(it.say);
+      } else { x.classList.remove("wrong"); void x.offsetWidth; x.classList.add("wrong"); sBad(); say([pick(L.tryAgain)]); }
+    });
+    say(withStart(r.ask));
+  }
+  draw();
+}
+
+// ================= tracing board =================
+function runTrace(a) {
+  const chars = a.chars, done = new Set(S.known[a.id] || []);
+  const goal = Math.min(chars.length, 10);
+  let i = 0, stars = 0;
+  const fam = a.font === "kn" ? '"Baloo Tamma 2"' : /[ऀ-ॿ]/.test(chars[0]) ? '"Baloo 2"' : '"Andika"';
+  dots(0, 0, []);
+  body().innerHTML = `<div class="tracewrap">
+    <canvas class="pad" id="pad"></canvas>
+    <div class="row">
+      <button class="btn" id="tPrev" aria-label="Previous">◀</button>
+      <button class="btn" id="tClear">🧽 Clear</button>
+      ${replayBtn}
+      <button class="btn" id="tNext" aria-label="Next">▶</button>
+    </div>
+    <div class="row"><button class="btn main" id="tDone">⭐ I wrote it!</button></div>
+    <div class="strip" id="tStrip"></div>
+    <p class="p" style="text-align:center;margin:6px 0 0">Trace with a finger here, then write it in her notebook too. After ${goal} she wins a sticker.</p>
+  </div>`;
+  const cv = document.getElementById("pad"), ctx = cv.getContext("2d");
+  let drawing = false, last = null;
+  function size() { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  function guide(talk) {
+    const r = cv.getBoundingClientRect(), w = r.width, h = r.height, ch = chars[i];
+    ctx.clearRect(0, 0, w, h);
+    const fs = Math.min(h * .72, (w * .9) / Math.max(1, ch.length * .62));
+    ctx.font = `700 ${fs}px ${fam}, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffd6e8"; ctx.fillText(ch, w / 2, h / 2 + fs * .04);
+    ctx.setLineDash([6, 8]); ctx.lineWidth = 3; ctx.strokeStyle = "#ff3e8a"; ctx.strokeText(ch, w / 2, h / 2 + fs * .04); ctx.setLineDash([]);
+    const st = document.getElementById("tStrip");
+    st.innerHTML = chars.map((c, k) => `<button class="${k === i ? "cur" : ""} ${done.has(k) ? "known" : ""} ${a.font === "kn" ? "kn" : ""}" data-k="${k}">${c}</button>`).join("");
+    st.querySelectorAll("[data-k]").forEach(x => x.onclick = () => { i = +x.dataset.k; guide(true); });
+    st.querySelector(".cur")?.scrollIntoView({ block: "nearest", inline: "center" });
+    document.getElementById("tDone").textContent = done.has(i) ? "✅ Written! Next ▶" : "⭐ I wrote it!";
+    if (talk) say(talk === "start" ? withStart(["Trace it with your finger.", "_", ...a.say(ch)]) : a.say(ch));
+  }
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.onpointerdown = e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove = e => { if (!drawing) return; const p = pos(e); ctx.strokeStyle = "#a0005a"; ctx.lineWidth = 10; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; };
+  cv.onpointerup = cv.onpointercancel = () => drawing = false;
+  document.getElementById("tPrev").onclick = () => { i = (i - 1 + chars.length) % chars.length; guide(true); };
+  document.getElementById("tNext").onclick = () => { i = (i + 1) % chars.length; guide(true); };
+  document.getElementById("tClear").onclick = () => guide(false);
+  body().querySelector("[data-replay]").onclick = () => say(a.say(chars[i]));
+  document.getElementById("tDone").onclick = async () => {
+    if (!done.has(i)) {
+      done.add(i); S.known[a.id] = [...done]; addStars(1); stars++; sGood(); save();
+      if (done.size === goal && !S.done[a.id]) { await praise(L.write); finish(a, stars, true); return; }
+      const ok = await praise(L.write); if (!ok || !document.body.contains(cv)) return;
+    }
+    i = (i + 1) % chars.length; guide(true);
+  };
+  const go = talk => { if (!document.body.contains(cv)) return; size(); guide(talk); };
+  (document.fonts ? document.fonts.load(`700 40px ${fam}`, chars[0]).catch(() => {}) : Promise.resolve()).then(() => go("start"));
+  addEventListener("resize", () => { if (document.getElementById("pad") === cv) go(false); });
+}
+
+// ================= rhyme =================
+function rateBlock(id, label) {
+  const r = S.rated[id] || 0;
+  return `<div class="ratewrap"><b>${label}</b><div class="rate">${[1, 2, 3].map(n => `<button data-rate="${n}" class="${n <= r ? "on" : ""}" aria-label="${n} stars">⭐</button>`).join("")}</div>
+    <small style="color:var(--berry-soft)">Grown-up taps the stars. New stars go into her star jar.</small></div>`;
+}
+function wireRate(a, id, lines) {
+  body().querySelectorAll("[data-rate]").forEach(x => x.onclick = async () => {
+    const n = +x.dataset.rate, prev = S.rated[id] || 0;
+    if (n > prev) { S.rated[id] = n; save(); addStars(n - prev); }
+    body().querySelectorAll("[data-rate]").forEach(y => y.classList.toggle("on", +y.dataset.rate <= n));
+    sGood(); await praise(lines);
+    finish(a, Math.max(0, n - prev), false);
+  });
+}
+// recordings of a grown-up singing, kept in this browser
+const recStore = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => { const r = indexedDB.open("krishvi-recordings", 1); r.onupgradeneeded = () => r.result.createObjectStore("rec"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+  const tx = async (mode, fn) => { try { const db = await open(); return await new Promise(res => { const t = db.transaction("rec", mode); const q = fn(t.objectStore("rec")); t.oncomplete = () => res(q && q.result); t.onerror = () => res(null); }); } catch { return null; } };
+  return { get: k => tx("readonly", st => st.get(k)), set: (k, v) => tx("readwrite", st => st.put(v, k)), del: k => tx("readwrite", st => st.delete(k)) };
+})();
+function playBlob(blob) {
+  return new Promise(res => {
+    const url = URL.createObjectURL(blob), a = new Audio(url); curAudio = a; curDone = res;
+    a.onended = a.onerror = () => { URL.revokeObjectURL(url); curDone = null; res(); };
+    a.play().catch(() => { curDone = null; res(); });
+  });
+}
+function runRhyme(a) {
+  const r = a.r(), lang = a.lang, kn = lang === "kn";
+  const lines = () => (S.words[r.id] || "").split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const lineLang = t => kn && !/[ಀ-೿]/.test(t) ? "en" : lang === "hi" && !/[ऀ-ॿ]/.test(t) ? "en" : lang;
+  let rec = null, recorder = null, recTimer = null;
+  dots(0, 0, []);
+  body().innerHTML = `
+    ${r.en ? `<p style="margin:10px 0 0;font-size:1.1rem"><b>${r.en}</b></p>` : ""}
+    <div class="readalong">
+      <div id="rPlay"></div>
+      <div class="rlines" id="rlines"></div>
+    </div>
+    ${r.gist ? `<div class="parent">${r.gist}</div>` : ""}
+    <h3 style="margin-top:16px">Picture steps <small style="color:var(--berry-soft);font-weight:600">· tap a picture to hear it</small></h3>
+    <div class="cues">${r.cues.map(([em, t], k) => `<button class="cue" data-cue="${k}"><span class="cn">${k + 1}</span><span class="ce">${em}</span><span class="${kn ? "kn" : ""}">${t}</span></button>`).join("")}</div>
+    ${r.act ? `<div class="helpbox"><b>Actions:</b> ${r.act}</div>` : ""}
+    ${r.words ? `<h3 style="margin-top:16px">Word helper for Mummy/Papa</h3>
+      <div class="wordgrid">${r.words.map(([k, s, m]) => `<button class="wordbtn" data-w="${esc(k)}"><span class="kn">${k}</span><span>Say: <b>${s}</b></span><small>${m}</small></button>`).join("")}</div>` : ""}
+    <details class="typebox" id="rType"><summary>✏️ Type the rhyme words from her book</summary>
+      <p style="margin:4px 0 6px;color:var(--berry-soft);font-size:.92rem">One line of the rhyme on each line, exactly as her book has them. Saved on this device.${kn ? " Kannada letters read best. English spelling (ondu kaage banditu) also works but sounds less natural." : ""}</p>
+      <textarea id="rw" class="${kn ? "kn" : ""}" rows="7" placeholder="Type the rhyme here, one line per line…">${esc(S.words[r.id] || "")}</textarea>
+      <div class="row" style="justify-content:flex-start"><button class="btn small main" id="rSave">💾 Save words</button></div>
+    </details>
+    ${rateBlock(r.id, "How well did she sing it?")}`;
+  const b = body();
+  const show = cur => { b.querySelector("#rlines").innerHTML = lines().map((t, k) => `<div class="rl ${k === cur ? "cur" : ""} ${kn ? "kn" : ""}">${esc(t)}</div>`).join(""); };
+  function panel() {
+    const has = lines().length;
+    const recBtn = recorder ? `<button class="btn rec on" id="rRec">⏹ Stop recording <span id="rSec">0:00</span></button>`
+      : `<button class="btn small rec" id="rRec">🎙️ ${rec ? "Record again" : "Record yourself singing"}</button>`;
+    b.querySelector("#rPlay").innerHTML = `
+      <div class="playbig">
+        <button class="btn main big" id="rAll">▶ Listen</button>
+        <button class="btn main alt big" id="rLine">🎤 Sing together</button>
+        <button class="btn" id="rStop">⏹ Stop</button>
+      </div>
+      ${has ? "" : `<p class="needwords">✏️ This rhyme's words aren't in yet. Type them once from her book and both buttons will play. <button class="btn small" id="rGoAll">📝 Fill in all rhymes</button></p>`}
+      <div class="row" style="justify-content:flex-start">${rec ? `<button class="btn small" id="rMine">▶ Play my recording</button>` : ""}${recBtn}</div>`;
+    const needWords = () => { toast("Type the rhyme words once, then tap ▶ again"); const d = b.querySelector("#rType"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => b.querySelector("#rw").focus(), 400); };
+    b.querySelector("#rMine")?.addEventListener("click", async () => { stopVoice(); const my = token; await playBlob(rec); if (my === token) praise(L.sing); });
+    b.querySelector("#rAll").onclick = () => lines().length ? sing(false) : needWords();
+    b.querySelector("#rLine").onclick = () => lines().length ? sing(true) : needWords();
+    b.querySelector("#rStop").onclick = () => { stopVoice(); show(-1); };
+    b.querySelector("#rRec").onclick = toggleRec;
+    b.querySelector("#rGoAll")?.addEventListener("click", rhymeWords);
+  }
+  async function toggleRec() {
+    if (recorder) { recorder.stop(); return; }
+    stopVoice();
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch { toast("The microphone isn't available. Allow microphone access for this page and try again."); return; }
+    const chunks = []; recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop()); clearInterval(recTimer); recorder = null;
+      rec = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
+      await recStore.set(r.id, rec); panel(); toast("Saved! Tap ▶ Play the rhyme");
+    };
+    recorder.start(); panel();
+    const t0 = Date.now();
+    recTimer = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000), el = b.querySelector("#rSec"); if (el) el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }, 500);
+  }
+  async function sing(repeat) {
+    stopVoice(); const my = token; const ls = lines();
+    for (let k = 0; k < ls.length; k++) {
+      if (my !== token) return;
+      show(k); b.querySelector(".rl.cur")?.scrollIntoView({ block: "nearest" });
+      await liveSay(ls[k], lineLang(ls[k]));
+      if (repeat && my === token) { if (CLIPS[L.yourTurn]) await playFile(CLIPS[L.yourTurn]); bubble(L.yourTurn, "🎤"); await sleep(900 + ls[k].split(/\s+/).length * 550); }
+    }
+    if (my === token) { show(-1); praise(L.sing); }
+  }
+  b.querySelectorAll("[data-cue]").forEach(x => x.onclick = () => { if (!kn) say([r.cues[+x.dataset.cue][1]]); });
+  b.querySelectorAll("[data-w]").forEach(x => x.onclick = () => say([KN(x.dataset.w)]));
+  const ta = b.querySelector("#rw");
+  const store = () => { S.words[r.id] = ta.value.trim(); save(); show(-1); panel(); };
+  b.querySelector("#rSave").onclick = () => { store(); toast("Words saved. Tap ▶ Sing it all"); b.querySelector("#rType").open = false; b.querySelector(".readalong").scrollIntoView({ behavior: "smooth" }); };
+  ta.onchange = store;
+  show(-1); panel();
+  recStore.get(r.id).then(x => { if (x && document.body.contains(b)) { rec = x; panel(); } });
+  wireRate(a, r.id, L.sing);
+  say(withStart(["Let's sing!"]));
+}
+
+// ================= story =================
+function runStory(a) {
+  const s = a.s();
+  dots(0, 0, []);
+  body().innerHTML = `
+    <div class="row" style="justify-content:flex-start"><button class="btn main" id="sRead">▶ Read me the story</button><button class="btn" id="sStop">⏹ Stop</button></div>
+    <div class="story">${s.tell.map(([em, t], k) => `<button class="scene" data-line="${k}"><span class="se">${em}</span><p>${t}</p></button>`).join("")}</div>
+    <div class="moral"><b>Moral:</b> ${s.moral}</div>
+    <div class="parent">After listening, ask her to tell it back in her own words. Ask: Who was in the story? What happened? What is the moral?</div>
+    ${rateBlock("story-" + s.id, "How well did she tell the story?")}`;
+  const b = body();
+  const mark = k => b.querySelectorAll(".scene").forEach((x, j) => x.classList.toggle("cur", j === k));
+  b.querySelector("#sRead").onclick = async () => {
+    stopVoice(); const my = token;
+    for (let k = 0; k < s.tell.length; k++) {
+      if (my !== token) return;
+      mark(k); b.querySelectorAll(".scene")[k].scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (CLIPS[s.tell[k][1]]) await playFile(CLIPS[s.tell[k][1]]); else await liveSay(s.tell[k][1], "en");
+      await sleep(400);
+    }
+    if (my === token) { mark(-1); say([`Moral of the story: ${s.moral}`]); }
+  };
+  b.querySelector("#sStop").onclick = () => { stopVoice(); mark(-1); };
+  b.querySelectorAll("[data-line]").forEach(x => x.onclick = () => { mark(+x.dataset.line); say([s.tell[+x.dataset.line][1]]); });
+  wireRate(a, "story-" + s.id, L.story);
+  say(withStart([`Let's listen to the story, ${s.title}.`]));
+}
+
+// ================= number chart =================
+function runChart(a) {
+  const NQ = 8; let i = 0, stars = 0, target, busy = false; const ok = [];
+  const targets = sample(range(1, 100), NQ);
+  body().innerHTML = `<div class="q"><div class="prompt" id="cPrompt"></div><div class="row">${replayBtn}</div></div><div class="chart" id="chart">${range(1, 100).map(n => `<button data-n="${n}">${n}</button>`).join("")}</div>`;
+  const b = body();
+  const ask = () => ["Find the number", N(target)];
+  function next(first) { target = targets[i]; busy = false; dots(NQ, i, ok); b.querySelector("#cPrompt").innerHTML = `<span class="findnum">${target}</span>`; say(first ? withStart(ask()) : ask()); }
+  b.querySelector("[data-replay]").onclick = () => say(ask());
+  b.querySelectorAll("[data-n]").forEach(x => x.onclick = async () => {
+    if (busy) return;
+    const n = +x.dataset.n;
+    if (n === target) {
+      busy = true; x.classList.add("hit"); sGood(); addStars(1); stars++; ok[i] = 1; i++;
+      const done = await praise(L.praise, [N(n)]);
+      if (done && document.body.contains(b)) i < NQ ? next() : finish(a, stars, true);
+    } else { sBad(); say([N(n), "_", pick(L.tryAgain)]); }
+  });
+  next(true);
+}
+
+// ================= drawing =================
+function runDraw(a) {
+  const cols = ["#ff3e8a", "#ff8fc0", "#a66cff", "#47b4f5", "#2fd39a", "#ffd23f", "#ff8a3d", "#ff5a5a", "#8b5a2b", "#222222", "#ffffff"];
+  let col = cols[0], w = 10, prompt = pick(DATA.drawPrompts);
+  const promptSay = p => [`Let's draw ${p.slice(p.indexOf(" ") + 1)}!`];
+  dots(0, 0, []);
+  body().innerHTML = `<div class="tracewrap" style="max-width:720px">
+    <p class="q prompt" style="text-align:center;font-weight:700;font-size:1.4rem;margin:8px 0"><span id="dp">${prompt}</span> <button class="btn small" id="dNew">🔀 Something else</button></p>
+    <canvas class="pad drawpad" id="dpad"></canvas>
+    <div class="palette">${cols.map(c => `<button data-c="${c}" style="background:${c}" class="${c === col ? "cur" : ""}" aria-label="colour ${c}"></button>`).join("")}</div>
+    <div class="row"><button class="btn small" data-w="4">Thin</button><button class="btn small" data-w="10">Medium</button><button class="btn small" data-w="22">Fat</button><button class="btn small" id="dClear">🧽 Clear</button></div>
+    <div class="row"><button class="btn main" id="dDone">⭐ Show Mummy!</button></div></div>`;
+  const cv = document.getElementById("dpad"), ctx = cv.getContext("2d");
+  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+  let on = false, last;
+  const pos = e => { const q = cv.getBoundingClientRect(); return [e.clientX - q.left, e.clientY - q.top]; };
+  cv.onpointerdown = e => { on = true; last = pos(e); cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove = e => { if (!on) return; const p = pos(e); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; };
+  cv.onpointerup = cv.onpointercancel = () => on = false;
+  const b = body();
+  b.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { col = x.dataset.c; b.querySelectorAll("[data-c]").forEach(y => y.classList.toggle("cur", y === x)); });
+  b.querySelectorAll("[data-w]").forEach(x => x.onclick = () => w = +x.dataset.w);
+  b.querySelector("#dClear").onclick = () => ctx.clearRect(0, 0, cv.width, cv.height);
+  b.querySelector("#dNew").onclick = () => { prompt = pick(DATA.drawPrompts); b.querySelector("#dp").textContent = prompt; say(promptSay(prompt)); };
+  b.querySelector("#dDone").onclick = async () => { addStars(2); sGood(); await praise(L.draw); finish(a, 2, true); };
+  say(withStart(promptSay(prompt)));
+}
+
+// ================= sticker book & settings =================
+function modal(html) {
+  const m = document.createElement("div"); m.className = "modal"; m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}<div class="row"><button class="btn main" data-close>Close</button></div></div>`;
+  m.onclick = e => { if (e.target === m || e.target.hasAttribute("data-close")) m.remove(); };
+  document.body.appendChild(m); return m;
+}
+function stickerBook() {
+  modal(`<h2>Krishvi's Sticker Book</h2><p>Finish a game for the first time to win a sticker. ${ALL_ACTS.filter(a => S.done[a.id]).length} of ${ALL_ACTS.length} collected.</p>
+    <div class="stickers">${ALL_ACTS.map((a, k) => S.done[a.id] ? `<div class="stk" title="${esc(a.t)}">${DATA.stickers[k % DATA.stickers.length]}</div>` : `<div class="stk lock" title="${esc(a.t)}">?</div>`).join("")}</div>`);
+}
+function settings() {
+  const m = modal(`<h2>For grown-ups</h2>
+    <div class="field"><label for="sFounder">Founder of Blooming Buds (GK answer)</label><input id="sFounder" value="${esc(S.founder)}" placeholder="Type the name"></div>
+    <div class="field"><label for="sTeacher">Class teacher's name (My School)</label><input id="sTeacher" value="${esc(S.teacher)}" placeholder="Type the name"></div>
+    <p style="font-size:.92rem;color:var(--berry-soft)">Stars, stickers and typed rhyme words are saved in this browser on this device only.</p>
+    <div class="row" style="justify-content:flex-start"><button class="btn small" id="sReset">Start over (clear stars)</button></div>
+    <div id="sConfirm" hidden class="helpbox">This clears all stars, stickers and progress. Typed rhyme words and names are kept.
+      <div class="row" style="justify-content:flex-start"><button class="btn small main" id="sYes">Yes, start over</button><button class="btn small" id="sNo">Keep everything</button></div></div>`);
+  m.querySelector("#sFounder").onchange = e => { S.founder = e.target.value.trim(); save(); toast("Saved"); };
+  m.querySelector("#sTeacher").onchange = e => { S.teacher = e.target.value.trim(); save(); toast("Saved"); };
+  m.querySelector("#sReset").onclick = () => m.querySelector("#sConfirm").hidden = false;
+  m.querySelector("#sNo").onclick = () => m.querySelector("#sConfirm").hidden = true;
+  m.querySelector("#sYes").onclick = () => { Object.assign(S, { stars: 0, done: {}, known: {}, rated: {}, stickers: [], mission: null }); save(); m.remove(); home(); toast("Fresh start!"); };
+}
+
+splash();
+
+</script>
 </body>
 </html>
